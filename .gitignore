@@ -1,0 +1,14 @@
+﻿# Arquivos temporarios de compilacao do PyInstaller
+build/
+*.spec
+
+# Cache e bytecodes do Python
+__pycache__/
+*.py[cod]
+*.class
+
+# Ambientes virtuais e configuracoes de IDE
+venv/
+.venv/
+.vscode/
+.idea/

@@ -4,26 +4,39 @@ import csv
 
 # ==============================================================================
 # BANCO DE DADOS DE FUNÇÕES ANSI (PADRÃO IEEE C37.2 / TABELA ANSI SEL & SIEMENS)
-# Desenvolvido por Luidy Bueno Paviani
+# Build 2.0 - 20/10/2026
 # ==============================================================================
-# Sinais físicos comuns padronizados para permitir agrupamento automático
-# (deduplicação de EAs, BIs e BOs) na aba de Consolidação do Workstatement.
+# Sinais padronizados para permitir agrupamento automático (deduplicação)
+# e separação automática em 3 blocos no Consolidador e no Excel (.csv):
+#   1. Sinais Físicos Principais (EAs, BIs e BOs obrigatórias)
+#   2. Sinais Opcionais (TAG [Opcional])
+#   3. Sinais Lógicos (TAG [Lógico])
 # ==============================================================================
 
+# --- Entradas Analógicas Padrão (EAs) ---
 EA_TC_FASES = "TC do Vão - Fases (IA, IB, IC)"
 EA_TC_NEUTRO = "TC de Neutro Físico / Bucha de Neutro ou Toroidal (Canal IN / IY)"
 EA_TP_FASES = "TP de Barra ou Linha - Fases (VA, VB, VC)"
 
+# --- Entradas Digitais Padrão (BIs) ---
 BI_52AB = "Posição do Disjuntor Tripolar (52a e 52b)"
-BI_60_VTS = "Disjuntor Secundário do TP Aberto / Falha de Fusível (60 / VTS)"
+BI_TP_FUSIVEL = "Estado do Disjuntor Secundário do TP / Fusível Atuado"
 BI_MOLA_SF6 = "Disjuntor Pronto: Mola Carregada e Pressão de SF6 Normal"
 
-BO_TRIP_52 = "Disparo (Trip) nas Bobinas de Abertura 1 e 2 do Disjuntor (52-BT1 / 52-BT2)"
-BO_ACIONA_86 = "Acionamento do Relé de Bloqueio (86) e Disparo dos Disjuntores Associados"
-BO_PARTIDA_50BF = "Partida de Falha de Disjuntor (Iniciação 50BF)"
-BO_PARTIDA_79 = "Partida de Religamento Automático (Iniciação 79)"
+# --- Saídas Digitais Físicas Padrão (BOs - Linhas/Alimentadores vs. Transformador) ---
+BO_TRIP_LINHA = "Disparo (Trip) nas Bobinas de Abertura 1 e 2 do Disjuntor"
+BO_TRIP_TR_AT = "Disparo (Trip) nas Bobinas de Abertura 1 e 2 do Disjuntor AT"
+BO_TRIP_TR_BT = "Disparo (Trip) nas Bobinas de Abertura 1 e 2 do Disjuntor BT"
+BO_ACIONA_86 = "Acionamento do Relé de Bloqueio (86)"
 BO_BLOQUEIO_79 = "Bloqueio Definitivo do Religamento Automático (79 Lockout)"
-BO_ALARME_SCADA = "Sinalização / Alarme de Atuação para SCADA e Anunciador (30)"
+
+# --- Sinais com TAG [Opcional] (Separados no Excel conforme Item 4 do To-Do) ---
+BO_PARTIDA_79_OPC = "[Opcional] Partida de Religamento Automático (Iniciação 79)"
+BO_PARTIDA_79_Z1_OPC = "[Opcional] Partida de Religamento Automático (Iniciação 79) [Somente em Zona 1 ou via Teleproteção]"
+
+# --- Sinais com TAG [Lógico] (Separados no Excel conforme Item 5 do To-Do) ---
+BO_PARTIDA_50BF_LOG = "[Lógico] Partida de Falha de Disjuntor (Iniciação 50BF)"
+BO_ALARME_SCADA_LOG = "[Lógico] Sinalização / Alarme de Atuação para SCADA e Anunciador (30)"
 
 
 ANSI_DATABASE = {
@@ -38,17 +51,17 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB,
-                    BI_60_VTS + " [Bloqueia 21P por perda de potencial]",
+                    BI_TP_FUSIVEL + " [Bloqueia 21P por perda de potencial]",
                     "Recepção de Sinal de Teleproteção (85 RX)",
-                    "Bloqueio Externo por Oscilação de Potência (68 PSB)",
-                    "Chave de Bloqueio da Função 21 (43-21)"
+                    "[Opcional] Bloqueio Externo por Oscilação de Potência (68 PSB)",
+                    "[Opcional] Chave de Bloqueio da Função 21 (43-21)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79 + " [Somente em Zona 1 ou via Teleproteção]",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_79_Z1_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ],
                 # "sel": "TODO: SEL-421/411L/311L -> M1P, M2P, M3P, Z1T, Z2T, LOP",
                 # "siemens": "TODO: SIPROTEC 4 (7SA522/7SA6) / SIPROTEC 5 (7SA87)"
@@ -61,17 +74,17 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB,
-                    BI_60_VTS + " [Bloqueia 21N/21G por perda de potencial]",
+                    BI_TP_FUSIVEL + " [Bloqueia 21N/21G por perda de potencial]",
                     "Recepção de Sinal de Teleproteção (85 RX)",
-                    "Bloqueio Externo por Oscilação de Potência (68 PSB)",
-                    "Chave de Bloqueio da Função 21N/21G"
+                    "[Opcional] Bloqueio Externo por Oscilação de Potência (68 PSB)",
+                    "[Opcional] Chave de Bloqueio da Função 21 (43-21)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79 + " [Somente em Zona 1 ou via Teleproteção]",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_79_Z1_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "SOTF (Fechamento sob Falta - Switch Onto Fault)": {
@@ -84,17 +97,17 @@ ANSI_DATABASE = {
                     "Comando de Fechamento Manual do Disjuntor (Ativa janela temporal de SOTF)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     BO_BLOQUEIO_79,
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
     "24": {
         "nome": "Relé de volts por hertz",
-        "descricao": "Opera quando a relação entre a tensão e a frequência (V/Hz) excede um valor predefinido, protegendo transformadores de potência e geradores contra sobreexcitação (saturação magnética do núcleo e aquecimento por correntes parasitas).",
+        "descricao": "Opera quando a relação entre a tensão e a frequência (V/Hz) excede um valor predefinido, protegendo transformadores de potência e geradores contra sobreexcitação (saturação magnética do núcleo).",
         "subfuncoes": {
             "24 (Sobreexcitação Volts/Hertz - V/Hz)": {
                 "ea": [
@@ -102,21 +115,23 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB,
-                    BI_60_VTS + " [Bloqueia função 24 em caso de falha no TP]",
-                    "Chave de Bloqueio Externo da Função 24"
+                    BI_TP_FUSIVEL + " [Bloqueia função 24 em caso de falha no TP]",
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 24"
                 ],
                 "bo": [
                     "Alarme de Sobreexcitação V/Hz - 1º Estágio",
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86 + " [2º Estágio de Trip por Sobreexcitação]",
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
     "25": {
         "nome": "Dispositivo de sincronização ou verificação de sincronismo",
-        "descricao": "Verifica magnitude de tensão (ΔV), frequência (Δf) e ângulo de fase (Δθ) entre dois pontos antes de permitir o fechamento do disjuntor, além das lógicas de Barra Morta / Linha Viva.",
+        "descricao": "Verifica magnitude de tensão (V), frequência (f) e ângulo de fase (θ) entre dois pontos antes de permitir o fechamento do disjuntor, além das lógicas de Barra Morta / Linha Viva.",
         "subfuncoes": {
             "25 (Verificação de Sincronismo e Barra/Linha Viva/Morta)": {
                 "ea": [
@@ -126,13 +141,13 @@ ANSI_DATABASE = {
                 "bi": [
                     "Requisição de Fechamento Manual do Disjuntor (Local / Remoto / SCADA)",
                     "Requisição de Fechamento pelo Religador Automático (79)",
-                    "Disjuntor Secundário do TP de Barra Aberto (Bloqueia permissão por Barra Morta)",
-                    "Disjuntor Secundário do TP de Linha Aberto (Bloqueia permissão por Linha Morta)",
-                    "Chave de Bypass de Sincronismo (43-25, quando aplicável)"
+                    "Estado do Disjuntor Secundário do TP de Barra / Fusível Atuado [Bloqueia permissão por Barra Morta]",
+                    "Estado do Disjuntor Secundário do TP de Linha / Fusível Atuado [Bloqueia permissão por Linha Morta]",
+                    "[Opcional] Chave de Bypass de Sincronismo (43-25)"
                 ],
                 "bo": [
                     "Permissão de Fechamento do Disjuntor (Liberado na malha da Bobina de Fechamento 52-BC / 52-BFE)",
-                    "Alarme de Bloqueio por Fora de Sincronismo"
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -146,13 +161,16 @@ ANSI_DATABASE = {
                 "bi": [
                     "Alarme de Temperatura Elevada do Óleo - 1º Estágio (26OA)",
                     "Desligamento (Trip) por Temperatura Muito Elevada do Óleo - 2º Estágio (26OT)",
-                    "Alarme de Falha do Monitor de Temperatura (Autodiagnóstico)"
+                    "[Opcional] Alarme de Falha do Monitor de Temperatura (Autodiagnóstico)"
                 ],
                 "bo": [
+                    # Nota de revisão (Item 11): Confirmar padrão de BOs com o Patrick
                     "Comando de Ligação de Ventilação Forçada do Transformador",
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86 + " [2º Estágio de Trip]",
-                    BO_PARTIDA_50BF + " [Supervisionada por contato 52a]",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -166,13 +184,14 @@ ANSI_DATABASE = {
                     EA_TP_FASES
                 ],
                 "bi": [
-                    BI_60_VTS + " [Obrigatório para bloquear o 27 e impedir trip falso ao desarmar o disjuntor secundário do TP]",
-                    BI_52AB + " [Opcional: inibe atuação com o vão propositalmente desenergizado]"
+                    BI_TP_FUSIVEL + " [Obrigatório para bloquear o 27 e impedir trip falso ao desarmar o disjuntor secundário do TP]",
+                    BI_52AB + " [Opcional: inibe atuação com o vão propositalmente desenergizado]",
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 27"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Permissão de Transferência Automática de Barramentos / Serviços Auxiliares",
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "27CC (Supervisão de Subtensão de Alimentação CC)": {
@@ -181,7 +200,7 @@ ANSI_DATABASE = {
                     "Contato seco do Relé Auxiliar Supervisor de Tensão CC (27CC) de 125 Vcc / 48 Vcc"
                 ],
                 "bo": [
-                    "Alarme de Falta/Subtensão CC da Malha de Comando/Proteção para SCADA e Anunciador (30)"
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -198,15 +217,14 @@ ANSI_DATABASE = {
                     "Botoeiras de Reconhecimento (ACK), Silenciar Buzina, Teste de Lâmpadas e Reset"
                 ],
                 "bo": [
-                    "Acionamento de Buzina / Alarme Sonoro do Painel",
-                    "Contato de Alarme Agrupado (Urgente / Não Urgente) para UTR / SCADA"
+                    "Acionamento de Buzina / Alarme Sonoro do Painel"
                 ]
             }
         }
     },
     "32": {
         "nome": "Relé direcional de potência",
-        "descricao": "Opera quando o fluxo de potência ativa (W) ou reativa (VAr) ultrapassa um limiar em uma direção específica (ex: proteção contra motorização/potência reversa em geradores ou controle de fluxo em interligações).",
+        "descricao": "Opera quando o fluxo de potência ativa (W) ou reativa (VAr) ultrapassa um limiar em uma direção específica (ex: proteção contra motorização/potência reversa em geradores ou controle de fluxo em interligações). [Nota: Confirmar padrão de BOs com o Patrick]",
         "subfuncoes": {
             "32P / 32Q (Direcional de Potência Ativa / Reativa)": {
                 "ea": [
@@ -215,15 +233,21 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB,
-                    BI_60_VTS + " [Bloqueia elemento 32 por perda de potencial]"
+                    BI_TP_FUSIVEL + " [Bloqueia elemento 32 por perda de potencial]",
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 32"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    # Nota de revisão (Itens 11 e 13): Confirmar com o Patrick as BOs desta função
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
+    # ==========================================================================
+    # MARCADOR DE REVISÃO (ITEM 13): Revisado manualmente pelo Luidy até a 32.
+    # As funções abaixo (43 a 94) já receberam as padronizações globais do To-Do.
+    # ==========================================================================
     "43": {
         "nome": "Dispositivo de transferência ou seleção manual",
         "descricao": "Chave seletora operada manualmente no painel ou virtualmente no IED para transferir modos de comando (Local/Remoto) ou habilitar/desabilitar funções (79, 85, 51N, ERAC).",
@@ -235,8 +259,8 @@ ANSI_DATABASE = {
                     "Contato Posição 2 da Chave (Ex: Comando REMOTO / Função DESABILITADA)"
                 ],
                 "bo": [
-                    "Sinalização de Posição da Chave para o SCADA (IEC 61850 / DNP3)",
-                    "Permissão ou Bloqueio na lógica interna de comando/proteção do IED"
+                    "Permissão ou Bloqueio na malha de comando/proteção",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -251,12 +275,11 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB,
-                    "Bloqueio Externo da Função 46"
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 46"
                 ],
                 "bo": [
-                    "Alarme de Desequilíbrio de Corrente / Condutor Partido (1º Estágio)",
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -270,12 +293,13 @@ ANSI_DATABASE = {
                     EA_TP_FASES
                 ],
                 "bi": [
-                    BI_60_VTS + " [Bloqueia elemento 47 para evitar atuação indevida]"
+                    BI_TP_FUSIVEL + " [Bloqueia elemento 47 para evitar atuação indevida]",
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 47"
                 ],
                 "bo": [
                     "Bloqueio de Fechamento do Disjuntor (52) por Inversão de Sequência de Fase",
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -289,28 +313,31 @@ ANSI_DATABASE = {
                     EA_TC_FASES
                 ],
                 "bi": [
-                    "Reset / Bloqueio da Memória Térmica"
+                    "[Opcional] Bloqueio Externo / Reset da Memória Térmica da Função 49"
                 ],
                 "bo": [
-                    "Alarme de Sobrecarga Térmica - 1º Estágio",
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
-            "49RTD / 49 Externo (Imagem Térmica dos Enrolamentos)": {
+            "49RTD / 49 Externo (Imagem Térmica dos Enrolamentos do TR)": {
                 "ea": [
                     "Sinais de RTD (PT100) ou Transdutores de 4-20 mA [Quando lidos via módulo analógico/fibra pelo IED]"
                 ],
                 "bi": [
                     "Contato de Alarme de Temperatura do Enrolamento - 1º Estágio (49A)",
                     "Contato de Trip de Temperatura do Enrolamento - 2º Estágio (49T)",
-                    "Contato de Partida de Ventilação Forçada"
+                    "Contato de Partida de Ventilação Forçada",
+                    "[Opcional] Alarme de Falha do Monitor de Temperatura (Autodiagnóstico)"
                 ],
                 "bo": [
                     "Comando de Ligação de Ventilação Forçada do Transformador",
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86 + " [2º Estágio de Trip]",
-                    BO_PARTIDA_50BF + " [Supervisionada por contato 52a]",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -324,15 +351,15 @@ ANSI_DATABASE = {
                     EA_TC_FASES + " [Não utiliza TC de Neutro]"
                 ],
                 "bi": [
-                    "Bloqueio de Seletividade Lógica (Recepção ZSI dos relés a jusante, quando aplicável)",
-                    "Chave de Bloqueio Externo / Grupo de Ajuste Alternativo"
+                    "[Opcional] Bloqueio Externo por Seletividade Lógica (Recepção ZSI dos relés a jusante)",
+                    "[Opcional] Bloqueio Externo por Chave ou Grupo de Ajuste Alternativo"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Sinal de Bloqueio de Seletividade Lógica (ZSI para relé a montante)",
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "Neutro Medido [SEL: 50N | SIEMENS: 50G / 50Ns] (Canal IN Físico)": {
@@ -340,14 +367,14 @@ ANSI_DATABASE = {
                     EA_TC_NEUTRO + " [Medição física direta no 4º canal de corrente; não requer TCs de fase para este elemento]"
                 ],
                 "bi": [
-                    "Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)",
-                    "Bloqueio de Seletividade Lógica de Terra (ZSI)"
+                    "[Opcional] Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)",
+                    "[Opcional] Bloqueio Externo por Seletividade Lógica de Terra (ZSI)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "Residual Calculado 3I0 [SEL: 50G | SIEMENS: 50N] (Soma IA+IB+IC)": {
@@ -355,13 +382,13 @@ ANSI_DATABASE = {
                     EA_TC_FASES + " [O IED calcula 3I0 = IA + IB + IC internamente ou no retorno comum; não requer TC separado na bucha de neutro]"
                 ],
                 "bi": [
-                    "Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)"
+                    "[Opcional] Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "50Q (Sobrecorrente Instantânea de Sequência Negativa - 3I2)": {
@@ -369,12 +396,12 @@ ANSI_DATABASE = {
                     EA_TC_FASES + " [Calculado internamente pelo IED para faltas assimétricas]"
                 ],
                 "bi": [
-                    "Bloqueio Externo da Função 50Q"
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 50Q"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "50BF (Proteção contra Falha de Disjuntor - Breaker Failure)": {
@@ -386,11 +413,11 @@ ANSI_DATABASE = {
                     BI_52AB + " [Supervisão para falhas mecânicas em trips sem corrente elevada, como 63, 49 e 59]"
                 ],
                 "bo": [
-                    "Re-Trip 50BF (1º Estágio instantâneo ou < 50 ms: novo comando de abertura nas Bobinas 1 e 2 do próprio disjuntor)",
-                    "Disparo 50BF (2º Estágio ~100 a 250 ms: aciona Relé de Bloqueio 86BF para abrir todos os disjuntores adjacentes da barra)",
+                    "Re-Trip 50BF (1º Estágio instantâneo ou < 50 ms: novo comando nas Bobinas 1 e 2 do próprio disjuntor)",
+                    "Disparo 50BF (2º Estágio ~100 a 250 ms: aciona Relé de Bloqueio 86BF para abrir disjuntores adjacentes da barra)",
                     BO_BLOQUEIO_79,
                     "Envio de Transferência Direta de Disparo (85 DTT TX) para abrir o terminal remoto",
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "50STUB (Sobrecorrente de Barra Stub - Arranjo Disjuntor e Meio)": {
@@ -402,9 +429,9 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     "Disparo (Trip) Imediato nos dois Disjuntores que formam o Stub (Disjuntor de Barra e Disjuntor Central)",
-                    BO_PARTIDA_50BF,
                     BO_BLOQUEIO_79,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -418,14 +445,14 @@ ANSI_DATABASE = {
                     EA_TC_FASES + " [Não utiliza TC de Neutro]"
                 ],
                 "bi": [
-                    "Bloqueio Externo da Função 51P"
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 51P"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Sinal de Partida (Pickup 51P) para Seletividade Lógica ou Oscilografia",
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "Neutro Medido [SEL: 51N | SIEMENS: 51G / 51Ns] (Canal IN Físico)": {
@@ -433,13 +460,13 @@ ANSI_DATABASE = {
                     EA_TC_NEUTRO
                 ],
                 "bi": [
-                    "Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)"
+                    "[Opcional] Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "Residual Calculado 3I0 [SEL: 51G | SIEMENS: 51N] (Soma IA+IB+IC)": {
@@ -447,13 +474,13 @@ ANSI_DATABASE = {
                     EA_TC_FASES + " [Calcula 3I0 = IA + IB + IC internamente; não exige TC de neutro separado]"
                 ],
                 "bi": [
-                    "Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)"
+                    "[Opcional] Chave de Bloqueio de Proteção de Neutro/Terra (43-50N/51N)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "51Q (Sobrecorrente Temporizada de Sequência Negativa - 3I2)": {
@@ -461,26 +488,26 @@ ANSI_DATABASE = {
                     EA_TC_FASES
                 ],
                 "bi": [
-                    "Bloqueio Externo da Função 51Q"
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 51Q"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "51V (Sobrecorrente Temporizada com Restrição/Controle de Tensão)": {
                 "ea": [
                     EA_TC_FASES,
-                    EA_TP_FASES + " [Reduz o pickup ou libera o elemento 51 quando a tensão cai durante faltas próximas a geradores/trafos]"
+                    EA_TP_FASES + " [Reduz o pickup ou libera o elemento 51 quando a tensão cai durante faltas]"
                 ],
                 "bi": [
-                    BI_60_VTS + " [Bloqueia o modo de restrição de tensão se houver queima de fusível do TP para evitar trip por carga normal]"
+                    BI_TP_FUSIVEL + " [Bloqueia o modo de restrição de tensão se houver atuação de fusível do TP]"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -505,8 +532,8 @@ ANSI_DATABASE = {
                 "bo": [
                     "Comando de Fechamento do Disjuntor (Bobina de Fechamento 52-BC / 52-BFE)",
                     "Comando de Abertura Operacional do Disjuntor (52-BA)",
-                    BO_TRIP_52,
-                    "Alarme de Discordância de Estado (52a = 52b) e Falha do Disjuntor para o SCADA"
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -521,13 +548,13 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB,
-                    "Bloqueio Externo da Função 59P"
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 59P"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Transferência Direta de Disparo (85 DTT TX) [Comum em LTs longas por Efeito Ferranti]",
                     BO_BLOQUEIO_79,
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "59N (Sobretensão de Neutro Medida via TP em Delta Aberto)": {
@@ -535,12 +562,12 @@ ANSI_DATABASE = {
                     "TP em Ligação Delta Aberto (Canal VN / VS = 3V0 medido fisicamente) [Atenção: ocupa o 4º canal de tensão do IED; verificar compatibilidade caso o mesmo IED possua função 25]"
                 ],
                 "bi": [
-                    "Disjuntor Secundário do TP em Delta Aberto Desarmado (Bloqueio por falha no circuito secundário do TP)",
-                    "Bloqueio Externo da Função 59N"
+                    "Estado do Disjuntor Secundário do TP em Delta Aberto / Fusível Atuado",
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 59N"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "59G (Sobretensão Residual Calculada - 3V0)": {
@@ -548,11 +575,11 @@ ANSI_DATABASE = {
                     EA_TP_FASES + " [O IED calcula 3V0 = VA + VB + VC internamente; não requer enrolamento de TP em Delta Aberto nem ocupa o 4º canal VS]"
                 ],
                 "bi": [
-                    BI_60_VTS + " [Obrigatório bloquear 59G na perda de uma fase do TP, pois a queima de 1 fusível gera falso 3V0 elevado]"
+                    BI_TP_FUSIVEL + " [Obrigatório bloquear 59G na perda de uma fase do TP, pois fusível atuado gera falso 3V0 elevado]"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "59Q (Sobretensão de Sequência Negativa - V2)": {
@@ -560,30 +587,30 @@ ANSI_DATABASE = {
                     EA_TP_FASES + " [Calculado internamente pelo IED]"
                 ],
                 "bi": [
-                    BI_60_VTS + " [Obrigatório bloquear 59Q na queima de fusível]"
+                    BI_TP_FUSIVEL + " [Obrigatório bloquear 59Q em caso de fusível atuado]"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
     "60": {
         "nome": "Relé de balanço de tensão ou corrente",
-        "descricao": "Opera quando há diferença de tensão ou corrente entre dois circuitos (utilizado para Supervisão de Queima de Fusível / Perda de Potencial de TP - VTS e desequilíbrio de bancos de capacitores).",
+        "descricao": "Opera quando há diferença de tensão ou corrente entre dois circuitos (utilizado para Supervisão de Perda de Potencial do TP / Fusível Atuado e para desequilíbrio de bancos de capacitores).",
         "subfuncoes": {
-            "60 / VTS (Supervisão de Perda de Potencial do TP)": {
+            "60 (Supervisão de Perda de Potencial do TP / Fusível Atuado)": {
                 "ea": [
                     EA_TP_FASES,
-                    EA_TC_FASES + " [Compara presença de V2/3V0 sem presença correspondente de I2/3I0 para detectar queima de fusível]"
+                    EA_TC_FASES + " [Compara presença de V2/3V0 sem presença correspondente de I2/3I0 para detectar fusível atuado]"
                 ],
                 "bi": [
-                    BI_60_VTS
+                    BI_TP_FUSIVEL
                 ],
                 "bo": [
-                    "Bloqueio Imediato das Funções Dependentes de Tensão (21, 24, 25, 27, 32, 47, 51V, 59G, 59Q, 67, 68, 78) [Nota: o 81 é normalmente supervisionado por subtensão 27B81]",
-                    "Alarme de 'Falha de TP / Perda de Potencial (60)' para o SCADA e Anunciador (30)"
+                    "[Lógico] Bloqueio Imediato das Funções Dependentes de Tensão (21, 24, 25, 27, 32, 47, 51V, 59G, 59Q, 67, 68, 78) [Nota: o 81 é supervisionado por subtensão 27B81]",
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "60C (Desequilíbrio de Neutro de Banco de Capacitores - Dupla Estrela)": {
@@ -595,9 +622,9 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     "Alarme de Desequilíbrio de Capacitores - 1º Estágio (Queima de unidades fusíveis/latas)",
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     BO_BLOQUEIO_79,
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -628,9 +655,11 @@ ANSI_DATABASE = {
                     "Relé Buchholz - 2º Estágio: Fluxo de Óleo / Disparo (63BT)"
                 ],
                 "bo": [
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86 + " [2º Estágio de Trip]",
-                    BO_PARTIDA_50BF + " [Supervisionada por contato 52a]",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "63PS / 63VS (Pressão Súbita 63SP / Válvula de Alívio de Pressão 63PR / 63OLTC)": {
@@ -640,9 +669,11 @@ ANSI_DATABASE = {
                     "Relé de Fluxo de Óleo / Pressão do Comutador Sob Carga - Trip (63OLTC)"
                 ],
                 "bo": [
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86,
-                    BO_PARTIDA_50BF + " [Supervisionada por contato 52a]",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -656,12 +687,14 @@ ANSI_DATABASE = {
                     "TC de Aterramento da Cuba/Tanque do Transformador (1 TC dedicado no cabo de aterramento do tanque à malha)"
                 ],
                 "bi": [
-                    "Bloqueio Externo da Função 64"
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 64"
                 ],
                 "bo": [
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86,
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -676,15 +709,15 @@ ANSI_DATABASE = {
                     EA_TP_FASES + " [Necessário para polarização em quadratura 90°]"
                 ],
                 "bi": [
-                    BI_60_VTS + " [Bloqueia o 67P ou converte para 50P/51P não-direcional conforme filosofia]",
+                    BI_TP_FUSIVEL + " [Bloqueia o 67P ou converte para 50P/51P não-direcional conforme filosofia]",
                     "Recepção de Sinal de Teleproteção (85 RX)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "Neutro Medido [SEL: 67N | SIEMENS: 67G / 67Ns] (Operação por Canal IN)": {
@@ -693,15 +726,15 @@ ANSI_DATABASE = {
                     "Grandeza de Polarização: TP para Tensão Residual (3V0) E/OU TC de Bucha de Neutro do Transformador (IPOL)"
                 ],
                 "bi": [
-                    BI_60_VTS,
-                    "Chave de Bloqueio de Proteção de Neutro/Terra (43-67N)"
+                    BI_TP_FUSIVEL,
+                    "[Opcional] Chave de Bloqueio de Proteção de Neutro/Terra (43-67N)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "Residual Calculado 3I0 [SEL: 67G | SIEMENS: 67N] (Operação por IA+IB+IC)": {
@@ -710,15 +743,15 @@ ANSI_DATABASE = {
                     EA_TP_FASES + " [O IED calcula 3V0 e V2 para polarização sem exigir TC de neutro ou TP em delta aberto]"
                 ],
                 "bi": [
-                    BI_60_VTS,
-                    "Chave de Bloqueio de Proteção de Neutro/Terra (43-67N)"
+                    BI_TP_FUSIVEL,
+                    "[Opcional] Chave de Bloqueio de Proteção de Neutro/Terra (43-67N)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "67Q (Sobrecorrente Direcional de Sequência Negativa)": {
@@ -727,32 +760,32 @@ ANSI_DATABASE = {
                     EA_TP_FASES + " [Polarizado por tensão de sequência negativa V2]"
                 ],
                 "bi": [
-                    BI_60_VTS
+                    BI_TP_FUSIVEL
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
     "68": {
-        "nome": "Relé de bloqueio",
-        "descricao": "Inicia um sinal piloto para bloquear o desligamento em falhas externas ou durante oscilações de potência do sistema elétrico (Power Swing Blocking - PSB), evitando que o relé 21 atue indevidamente.",
+        "nome": "Relé de bloqueio por oscilação de potência",
+        "descricao": "Diferente do relé 86 (que trava o disjuntor aberto), a função 68 (Power Swing Blocking - PSB) monitora a taxa de variação da impedância aparente (dZ/dt) através de blinders/polígonos concêntricos no plano R-X para distinguir uma oscilação eletromecânica síncrona de um curto-circuito, gerando um sinal lógico que BLOQUEIA temporariamente as zonas de distância (21) para evitar desligamentos indevidos de linhas sãs.",
         "subfuncoes": {
-            "68 (Bloqueio por Oscilação de Potência - PSB)": {
+            "68 (Bloqueio de Distância por Oscilação de Potência - PSB)": {
                 "ea": [
                     EA_TC_FASES,
-                    EA_TP_FASES + " [Mede a taxa de variação dZ/dt no plano R-X]"
+                    EA_TP_FASES + " [Cálculo da trajetória de impedância Z(t) e taxa de variação dZ/dt no plano R-X]"
                 ],
                 "bi": [
-                    BI_60_VTS
+                    BI_TP_FUSIVEL
                 ],
                 "bo": [
-                    "Bloqueio Interno das Zonas de Distância (21P / 21G) selecionadas durante oscilação estável",
-                    BO_ALARME_SCADA
+                    "[Lógico] Bloqueio Interno das Zonas de Distância (21P / 21G) selecionadas durante oscilação de potência estável",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -768,8 +801,10 @@ ANSI_DATABASE = {
                     "Nível de Óleo Crítico do Comutador / Tanque - Desligamento/Trip (71T, quando aplicável na filosofia)"
                 ],
                 "bo": [
-                    BO_ALARME_SCADA,
-                    BO_ACIONA_86 + " [Caso o estágio de Trip por Nível Crítico esteja habilitado]"
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
+                    BO_ACIONA_86 + " [Caso o estágio de Trip por Nível Crítico esteja habilitado]",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -784,7 +819,7 @@ ANSI_DATABASE = {
                     "Série de contatos auxiliares (NA/NF) dos disjuntores CC (72.1, 72.2, 72.3...) monitorando alimentação de IEDs, bobinas e sinalização"
                 ],
                 "bo": [
-                    "Alarme de 'Disjuntor CC Desarmado (72)' para o SCADA e Anunciador (30)"
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -800,8 +835,8 @@ ANSI_DATABASE = {
                     "BI 2 de Supervisão da Bobina de Abertura (Em série com 52b - monitora continuidade com o disjuntor ABERTO)"
                 ],
                 "bo": [
-                    "Alarme Temporizado (~400 ms) de 'Falha no Circuito de Trip (74TC - Bobina 1 / Bobina 2)' para SCADA e Anunciador (30)",
-                    "Bloqueio de Fechamento do Disjuntor caso o circuito de abertura esteja rompido"
+                    "Bloqueio de Fechamento do Disjuntor caso o circuito de abertura esteja rompido",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -816,12 +851,13 @@ ANSI_DATABASE = {
                     EA_TP_FASES
                 ],
                 "bi": [
-                    BI_60_VTS
+                    BI_TP_FUSIVEL,
+                    "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 78"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     BO_BLOQUEIO_79,
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -837,11 +873,11 @@ ANSI_DATABASE = {
                     BI_MOLA_SF6,
                     "Chave Seletora de Religamento (43-79: Religamento em Serviço / Fora de Serviço)",
                     "Partida Externa de Religamento (79RI - Quando a proteção principal está em outro IED)",
-                    "Bloqueio Externo do Religamento (79DTL / Drive-to-Lockout: Atuação de 86, 50BF, Abertura Manual, Z2/Z3, ERAC 81U)"
+                    "[Opcional] Bloqueio Externo do Religamento (79DTL / Drive-to-Lockout: Atuação de 86, 50BF, Abertura Manual, Z2/Z3, ERAC 81U)"
                 ],
                 "bo": [
                     "Comando de Fechamento Automático do Disjuntor (Bobina de Fechamento 52-BC / 52-BFE, supervisionado pelo 25)",
-                    "Sinalização de '79 em Ciclo', '79 Pronto' e '79 Bloqueado (Lockout)' para o SCADA"
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "79M (Religamento Automático Monopolar / Tripolar - Linhas de AT/EAT)": {
@@ -855,29 +891,29 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     "Comando de Fechamento Individual por Polo: Bobina de Fechamento Polo A (52-BC_A), Polo B (52-BC_B) e Polo C (52-BC_C)",
-                    "Disparo Tripolar Definitivo (52-BT1 / 52-BT2) caso ocorra falta durante o tempo morto monopolar",
-                    "Sinalização de '79 Monopolar em Ciclo' e '79 Bloqueado (Lockout)' para o SCADA"
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
     "81": {
         "nome": "Relé de frequência",
-        "descricao": "Opera com um valor predeterminado de frequência ou taxa de variação de frequência. Abaixo estão separadas as variantes de Subfrequência (81U - ERAC), Sobrefrequência (81O) e Taxa de Variação df/dt (81R - ROCOF).",
+        "descricao": "Opera com um valor predeterminado de frequência (f) ou taxa de variação de frequência (df/dt). Abaixo estão separadas as variantes de Subfrequência (81U - ERAC), Sobrefrequência (81O) e Taxa de Variação df/dt (81R - ROCOF).",
         "subfuncoes": {
             "81U (Subfrequência - Esquema Regional de Alívio de Carga / ERAC)": {
                 "ea": [
                     EA_TP_FASES
                 ],
                 "bi": [
-                    BI_60_VTS + " [Nota: internamente o 81 também é supervisionado por subtensão 27B81]",
+                    BI_TP_FUSIVEL + " [Nota: internamente o 81 também é supervisionado por subtensão 27B81]",
                     "Chave de Habilitação / Desabilitação do ERAC (43-ERAC)",
                     BI_52AB
                 ],
                 "bo": [
-                    BO_TRIP_52 + " [Desligamento seletivo de alimentadores pelo 1º ao 5º estágio do ERAC]",
+                    BO_TRIP_LINHA,
                     BO_BLOQUEIO_79,
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "81O (Sobrefrequência)": {
@@ -885,12 +921,12 @@ ANSI_DATABASE = {
                     EA_TP_FASES
                 ],
                 "bi": [
-                    BI_60_VTS,
+                    BI_TP_FUSIVEL,
                     BI_52AB
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "81R (Taxa de Variação de Frequência - df/dt / ROCOF)": {
@@ -898,13 +934,13 @@ ANSI_DATABASE = {
                     EA_TP_FASES
                 ],
                 "bi": [
-                    BI_60_VTS,
+                    BI_TP_FUSIVEL,
                     "Chave de Habilitação do Estágio df/dt (43-ERAC)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
+                    BO_TRIP_LINHA,
                     BO_BLOQUEIO_79,
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -923,7 +959,7 @@ ANSI_DATABASE = {
                 "bo": [
                     "Transmissão de Permissão de Teleproteção (85 TX - acionado por partida de Zona 1 no PUTT ou Zona 2 / 67N Direto no POTT)",
                     "Eco / Weak Infeed Trip (Retransmissão de permissão quando o terminal local tem disjuntor aberto ou fonte fraca)",
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "85 DCB (Comparação Direcional por Bloqueio)": {
@@ -935,7 +971,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     "Transmissão de Sinal de Bloqueio (85 TX - acionado pela Zona Reversa 21-Z3R ou 67N Reverso ao detectar falta atrás do terminal local)",
-                    BO_ALARME_SCADA
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "85 DTT (Transferência Direta de Disparo - Direct Transfer Trip)": {
@@ -945,28 +981,29 @@ ANSI_DATABASE = {
                     "Alarme de Falha / Perda do Canal de Teleproteção (85 Channel Fail)"
                 ],
                 "bo": [
-                    BO_TRIP_52 + " [Disparo imediato ao receber DTT da ponta remota]",
+                    BO_TRIP_LINHA,
                     BO_BLOQUEIO_79,
-                    BO_PARTIDA_50BF,
                     "Envio de Transferência Direta de Disparo (85 DTT TX - acionado por 50BF, 59, 87R/Reator)",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
     "86": {
         "nome": "Relé de bloqueio e desligamento",
-        "descricao": "Relé auxiliar biestável operado eletricamente com reposição (reset) manual ou elétrica, que dispara o disjuntor e trava permanentemente seu fechamento após faltas graves (87, 63, 49, 50BF).",
+        "descricao": "Relé auxiliar biestável (Lockout) operado eletricamente com reposição (reset) manual, que dispara o disjuntor e trava mecanicamente/eletricamente seu circuito de fechamento após faltas graves (87, 63, 49, 50BF).",
         "subfuncoes": {
             "86 (Relé de Bloqueio Físico / Lockout)": {
                 "ea": [],
                 "bi": [
                     "Contato Auxiliar do Relé 86 (86a / 86b) conectado à BI do IED para indicar 'Relé 86 Atuado' e bloquear 79/fechamento",
-                    "Supervisão da Bobina do Relé 86 (Opcional)"
+                    "[Opcional] Supervisão da Bobina do Relé 86"
                 ],
                 "bo": [
                     BO_ACIONA_86,
-                    "Ação direta dos contatos do 86 físico: Abre Bobinas 1 e 2 do Disjuntor (52-BT1/BT2), corta malha da Bobina de Fechamento (52-BC) e inicia 50BF"
+                    "Ação direta dos contatos do 86 físico: Abre Bobinas 1 e 2 do Disjuntor, corta malha da Bobina de Fechamento (52-BC) e inicia 50BF",
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -983,13 +1020,15 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB + " [Disjuntores de AT e BT]",
-                    "Chave de Bloqueio da Proteção Diferencial (43-87T)"
+                    "[Opcional] Chave de Bloqueio da Proteção Diferencial (43-87T)"
                 ],
                 "bo": [
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86,
-                    BO_PARTIDA_50BF,
                     "Bloqueio do Comutador Sob Carga (OLTC)",
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "87N / REF (Diferencial de Terra Restrita de Transformador)": {
@@ -998,12 +1037,14 @@ ANSI_DATABASE = {
                     EA_TC_NEUTRO + " [Mede a corrente que retorna pelo aterramento da bucha de neutro do transformador]"
                 ],
                 "bi": [
-                    "Chave de Bloqueio da Proteção 87N/REF"
+                    "[Opcional] Chave de Bloqueio da Proteção 87N/REF"
                 ],
                 "bo": [
+                    BO_TRIP_TR_AT,
+                    BO_TRIP_TR_BT,
                     BO_ACIONA_86,
-                    BO_PARTIDA_50BF,
-                    BO_ALARME_SCADA
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "87B (Diferencial de Barras)": {
@@ -1014,13 +1055,13 @@ ANSI_DATABASE = {
                     "Posição de todas as Chaves Seccionadoras Seletoras de Barra (89-1a/b, 89-2a/b) para a lógica dinâmica de Réplica/Imagem de Barras",
                     BI_52AB + " [Disjuntores dos vãos e interligação]",
                     "Iniciação Externa de Falha de Disjuntor (BFI de cada vão, caso o 50BF seja processado no 87B)",
-                    "Chave de Bloqueio da Diferencial de Barras (43-87B)"
+                    "[Opcional] Chave de Bloqueio da Diferencial de Barras (43-87B)"
                 ],
                 "bo": [
                     BO_ACIONA_86 + " [Relé 86B de todos os disjuntores conectados à barra em falta]",
                     BO_BLOQUEIO_79,
                     "Envio de Transferência Direta de Disparo (85 DTT TX) para terminais remotos",
-                    "Alarme de Circuito de TC Aberto (Supervisão de TC / CTS)"
+                    BO_ALARME_SCADA_LOG
                 ]
             },
             "87L (Diferencial Longitudinal de Linha)": {
@@ -1030,13 +1071,14 @@ ANSI_DATABASE = {
                 ],
                 "bi": [
                     BI_52AB,
-                    "Alarme de Falha de Canal Óptico 87L / Chave de Bloqueio 43-87L"
+                    "Alarme de Falha de Canal Óptico 87L",
+                    "[Opcional] Chave de Bloqueio da Função 87L (43-87L)"
                 ],
                 "bo": [
-                    BO_TRIP_52,
-                    BO_PARTIDA_50BF,
-                    BO_PARTIDA_79,
-                    BO_ALARME_SCADA
+                    BO_TRIP_LINHA,
+                    BO_PARTIDA_79_OPC,
+                    BO_PARTIDA_50BF_LOG,
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -1060,7 +1102,7 @@ ANSI_DATABASE = {
                     "Permissão de Intertravamento (Energiza relé de liberação da malha de força/comando do motor da seccionadora)",
                     "Comando de Abertura da Seccionadora (89-BA)",
                     "Comando de Fechamento da Seccionadora (89-BC / 89-BFE)",
-                    "Alarme de Estado Indefinido (89a = 89b após tempo de curso do motor ~15 s)"
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -1079,12 +1121,12 @@ ANSI_DATABASE = {
                     "Comutador em Operação / Em Trânsito",
                     "Tap em Limite Máximo / Limite Mínimo",
                     "Chave Manual / Automático (43-90) e Mestre / Seguidor / Individual",
-                    "Bloqueio por Sobrecorrente (50/51) ou Subtensão Severa (27)"
+                    "[Opcional] Bloqueio Externo por Sobrecorrente (50/51) ou Subtensão Severa (27)"
                 ],
                 "bo": [
                     "Comando de Elevar Tap (Raise)",
                     "Comando de Abaixar Tap (Lower)",
-                    "Alarme de Comutação Incompleta / Discordância de Taps em Paralelo"
+                    BO_ALARME_SCADA_LOG
                 ]
             }
         }
@@ -1099,7 +1141,7 @@ ANSI_DATABASE = {
                     "Contato auxiliar de supervisão ou confirmação de atuação do relé 94 (quando monitorado pelo IED)"
                 ],
                 "bo": [
-                    BO_TRIP_52
+                    BO_TRIP_LINHA
                 ]
             }
         }
@@ -1113,7 +1155,8 @@ ANSI_DATABASE = {
 class SPCSApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("SPCS IED Mapper — Mapeamento de EAs, BIs e BOs | Desenvolvido por Luidy Bueno Paviani")
+        # Item 1 & Item 7: Removida a inscrição tripla de autoria; título limpo com Build 2.0
+        self.title("SPCS IED Mapper — Mapeamento de EAs, BIs e BOs (Build 2.0)")
         self.geometry("1240x760")
         self.minsize(1000, 640)
         self.configure(bg="#1e1e2e")
@@ -1121,7 +1164,7 @@ class SPCSApp(tk.Tk):
         self._configurar_estilo()
         self.checkbox_vars = {}
 
-        # Barra de Cabeçalho Superior com Assinatura do Autor
+        # Barra de Cabeçalho Superior (Sem repetição de autoria)
         frame_header_top = ttk.Frame(self)
         frame_header_top.pack(fill=tk.X, padx=14, pady=(10, 0))
         ttk.Label(
@@ -1131,11 +1174,11 @@ class SPCSApp(tk.Tk):
         ).pack(side=tk.LEFT)
         ttk.Label(
             frame_header_top,
-            text="Desenvolvido por Luidy Bueno Paviani",
-            style="Author.TLabel"
+            text="Build 2.0 — 20/10/2026",
+            style="Build.TLabel"
         ).pack(side=tk.RIGHT)
 
-        # Abas Principais (Ícones BMP compatíveis com todas as versões do Tcl/Tk)
+        # Abas Principais
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
 
@@ -1148,12 +1191,12 @@ class SPCSApp(tk.Tk):
         self._construir_aba_consulta()
         self._construir_aba_workstatement()
 
-        # Barra de Rodapé Fixa (Status Bar) com Assinatura
+        # Barra de Rodapé Fixa (Único local com a assinatura + Build 2.0 e Data)
         frame_footer = tk.Frame(self, bg="#181825", height=28)
         frame_footer.pack(fill=tk.X, side=tk.BOTTOM)
         lbl_footer_esq = tk.Label(
             frame_footer,
-            text="  Padrão ANSI / IEEE C37.2 | Referência de EAs, BIs e BOs para Projetos de SPCS (SEL & SIEMENS)",
+            text="  Padrão ANSI / IEEE C37.2 | Build 2.0 (20/10/2026)",
             bg="#181825",
             fg="#a6adc8",
             font=("Segoe UI", 9)
@@ -1181,7 +1224,7 @@ class SPCSApp(tk.Tk):
         style.configure("Panel.TFrame", background=bg_panel)
         style.configure("TLabel", background=bg_dark, foreground=fg_text, font=("Segoe UI", 10))
         style.configure("Header.TLabel", background=bg_dark, foreground="#8be9fd", font=("Segoe UI", 12, "bold"))
-        style.configure("Author.TLabel", background=bg_dark, foreground="#50fa7b", font=("Segoe UI", 10, "bold"))
+        style.configure("Build.TLabel", background=bg_dark, foreground="#f1fa8c", font=("Segoe UI", 10, "bold"))
         style.configure("TNotebook", background=bg_dark, borderwidth=0)
         style.configure("TNotebook.Tab", background="#343746", foreground=fg_text, padding=[12, 6], font=("Segoe UI", 10, "bold"))
         style.map("TNotebook.Tab", background=[("selected", accent)], foreground=[("selected", "#ffffff")])
@@ -1189,13 +1232,12 @@ class SPCSApp(tk.Tk):
         style.map("Accent.TButton", background=[("active", "#357abd")])
 
     # --------------------------------------------------------------------------
-    # ABA 1: CONSULTA INDIVIDUAL POR FUNÇÃO ANSI (COM SUBFUNÇÕES SEPARADAS)
+    # ABA 1: CONSULTA INDIVIDUAL POR FUNÇÃO ANSI
     # --------------------------------------------------------------------------
     def _construir_aba_consulta(self):
         paned = tk.PanedWindow(self.tab_consulta, orient=tk.HORIZONTAL, bg="#1e1e2e", sashwidth=6, bd=0)
         paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Painel Esquerdo: Busca e Menu de Funções ANSI
         frame_esq = ttk.Frame(paned, width=360)
         paned.add(frame_esq, minsize=300)
 
@@ -1214,7 +1256,6 @@ class SPCSApp(tk.Tk):
         frame_lista.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         scrollbar_lista = ttk.Scrollbar(frame_lista, orient=tk.VERTICAL)
-        # exportselection=False evita que a seleção da lista suma ao selecionar texto ao lado
         self.listbox_ansi = tk.Listbox(
             frame_lista,
             yscrollcommand=scrollbar_lista.set,
@@ -1234,7 +1275,6 @@ class SPCSApp(tk.Tk):
         self.listbox_ansi.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.listbox_ansi.bind("<<ListboxSelect>>", self._ao_selecionar_funcao)
 
-        # Painel Direito: Detalhamento Separado por Variante/Subfunção
         frame_dir = ttk.Frame(paned)
         paned.add(frame_dir, minsize=620)
 
@@ -1261,13 +1301,15 @@ class SPCSApp(tk.Tk):
         scroll_texto.pack(side=tk.RIGHT, fill=tk.Y)
         self.txt_detalhes.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Tags de formatação visual
+        # Tags de formatação visual (incluindo destaque para [Opcional] e [Lógico])
         self.txt_detalhes.tag_configure("desc", foreground="#f1fa8c", font=("Segoe UI", 10, "italic"), spacing3=10)
         self.txt_detalhes.tag_configure("subfuncao_header", background="#343746", foreground="#ffffff", font=("Segoe UI", 11, "bold"), spacing1=14, spacing3=6)
         self.txt_detalhes.tag_configure("secao_ea", foreground="#8be9fd", font=("Segoe UI", 10, "bold"), spacing1=6, spacing3=2)
         self.txt_detalhes.tag_configure("secao_bi", foreground="#50fa7b", font=("Segoe UI", 10, "bold"), spacing1=6, spacing3=2)
         self.txt_detalhes.tag_configure("secao_bo", foreground="#ffb86c", font=("Segoe UI", 10, "bold"), spacing1=6, spacing3=2)
         self.txt_detalhes.tag_configure("item", foreground="#f8f8f2", font=("Segoe UI", 10), lmargin1=18, lmargin2=30, spacing1=2)
+        self.txt_detalhes.tag_configure("item_opcional", foreground="#f1fa8c", font=("Segoe UI", 10), lmargin1=18, lmargin2=30, spacing1=2)
+        self.txt_detalhes.tag_configure("item_logico", foreground="#bd93f9", font=("Segoe UI", 10), lmargin1=18, lmargin2=30, spacing1=2)
         self.txt_detalhes.tag_configure("item_vazio", foreground="#949cbb", font=("Segoe UI", 10, "italic"), lmargin1=18, lmargin2=30, spacing1=2)
 
         self._popular_listbox()
@@ -1295,6 +1337,14 @@ class SPCSApp(tk.Tk):
     def _filtrar_lista(self, *args):
         self._popular_listbox(self.var_busca.get())
 
+    def _inserir_item_formatado(self, texto):
+        if texto.startswith("[Opcional]"):
+            self.txt_detalhes.insert(tk.END, f"• {texto}\n", "item_opcional")
+        elif texto.startswith("[Lógico]"):
+            self.txt_detalhes.insert(tk.END, f"• {texto}\n", "item_logico")
+        else:
+            self.txt_detalhes.insert(tk.END, f"• {texto}\n", "item")
+
     def _ao_selecionar_funcao(self, event):
         selecao = self.listbox_ansi.curselection()
         if not selecao:
@@ -1308,10 +1358,8 @@ class SPCSApp(tk.Tk):
         self.txt_detalhes.config(state=tk.NORMAL)
         self.txt_detalhes.delete("1.0", tk.END)
 
-        # Descrição Geral da Função ANSI
         self.txt_detalhes.insert(tk.END, f"► Definição Funcional:\n{dados['descricao']}\n", "desc")
 
-        # Renderiza cada Subfunção separadamente
         for nome_sub, sub_dados in dados["subfuncoes"].items():
             self.txt_detalhes.insert(tk.END, f"  ■ {nome_sub}  \n", "subfuncao_header")
 
@@ -1319,38 +1367,38 @@ class SPCSApp(tk.Tk):
             self.txt_detalhes.insert(tk.END, "  ⚡ Entradas Analógicas (EAs - TC / TP):\n", "secao_ea")
             if sub_dados["ea"]:
                 for item in sub_dados["ea"]:
-                    self.txt_detalhes.insert(tk.END, f"• {item}\n", "item")
+                    self._inserir_item_formatado(item)
             else:
-                self.txt_detalhes.insert(tk.END, "• Nenhuma entrada analógica de TC/TP necessária para esta subfunção.\n", "item_vazio")
+                # Item 10 do To-Do: Alterado para "para este item"
+                self.txt_detalhes.insert(tk.END, "• Nenhuma entrada analógica de TC/TP necessária para este item.\n", "item_vazio")
 
             # Entradas Digitais (BIs)
             self.txt_detalhes.insert(tk.END, "  [BI] Entradas Digitais (Binary Inputs):\n", "secao_bi")
             for item in sub_dados["bi"]:
-                self.txt_detalhes.insert(tk.END, f"• {item}\n", "item")
+                self._inserir_item_formatado(item)
 
             # Saídas Digitais (BOs)
             self.txt_detalhes.insert(tk.END, "  [BO] Saídas Digitais (Binary Outputs):\n", "secao_bo")
             for item in sub_dados["bo"]:
-                self.txt_detalhes.insert(tk.END, f"• {item}\n", "item")
+                self._inserir_item_formatado(item)
 
             self.txt_detalhes.insert(tk.END, "\n")
 
         self.txt_detalhes.config(state=tk.DISABLED)
 
     # --------------------------------------------------------------------------
-    # ABA 2: CONSOLIDADOR DE WORKSTATEMENT (COM AGRUPAMENTO DE SINAIS REPETIDOS)
+    # ABA 2: CONSOLIDADOR DE WORKSTATEMENT (SEPARADO EM FÍSICOS, OPCIONAIS E LÓGICOS)
     # --------------------------------------------------------------------------
     def _construir_aba_workstatement(self):
         paned = tk.PanedWindow(self.tab_workstatement, orient=tk.HORIZONTAL, bg="#1e1e2e", sashwidth=6, bd=0)
         paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Coluna Esquerda: Checkboxes das Subfunções do Workstatement
         frame_check = ttk.Frame(paned, width=430)
         paned.add(frame_check, minsize=380)
 
         ttk.Label(
             frame_check,
-            text="Selecione as Subfunções do Workstatement:",
+            text="Selecione os Itens do Workstatement:",
             style="Header.TLabel"
         ).pack(anchor="w", padx=5, pady=5)
 
@@ -1365,13 +1413,11 @@ class SPCSApp(tk.Tk):
         self.canvas_window_id = self.canvas_chk.create_window((0, 0), window=self.frame_interno_chk, anchor="nw")
         self.canvas_chk.configure(yscrollcommand=scroll_chk.set)
 
-        # Ajusta a largura do frame interno automaticamente ao redimensionar o Canvas
         self.canvas_chk.bind(
             "<Configure>",
             lambda e: self.canvas_chk.itemconfigure(self.canvas_window_id, width=e.width)
         )
 
-        # Suporte à rolagem com a roda do mouse quando o cursor está sobre a lista de checkboxes
         self.canvas_chk.bind("<Enter>", lambda e: self.canvas_chk.bind_all("<MouseWheel>", self._rolar_canvas_mousewheel))
         self.canvas_chk.bind("<Leave>", lambda e: self.canvas_chk.unbind_all("<MouseWheel>"))
 
@@ -1410,14 +1456,13 @@ class SPCSApp(tk.Tk):
                 )
                 chk.pack(fill=tk.X, padx=14, pady=1)
 
-        # Coluna Direita: Resumo Consolidado + Exportação CSV Simplificada
         frame_res = ttk.Frame(paned)
         paned.add(frame_res, minsize=560)
 
         frame_topo_res = ttk.Frame(frame_res)
         frame_topo_res.pack(fill=tk.X, padx=10, pady=5)
 
-        ttk.Label(frame_topo_res, text="Lista Consolidada e Agrupada de EAs, BIs e BOs", style="Header.TLabel").pack(side=tk.LEFT)
+        ttk.Label(frame_topo_res, text="Lista Consolidada (Físicos / Opcionais / Lógicos)", style="Header.TLabel").pack(side=tk.LEFT)
         ttk.Button(frame_topo_res, text="Exportar CSV / Excel", style="Accent.TButton", command=self._exportar_csv).pack(side=tk.RIGHT, padx=4)
         ttk.Button(frame_topo_res, text="Limpar Seleção", style="Accent.TButton", command=self._limpar_selecao).pack(side=tk.RIGHT, padx=4)
 
@@ -1447,63 +1492,89 @@ class SPCSApp(tk.Tk):
         self.canvas_chk.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     @staticmethod
-    def _extrair_chave_base_sinal(texto_sinal):
+    def _extrair_chave_base_e_tag(texto_sinal):
         """
-        Extrai a parte principal do sinal físico (antes de notas explicativas entre colchetes)
-        para agrupar o mesmo ponto físico de hardware mesmo que possua observações específicas.
+        Identifica se o sinal possui a TAG [Opcional] ou [Lógico] no início e
+        extrai o texto base (sem notas explicativas finais entre colchetes) para agrupamento.
         """
-        return texto_sinal.split(" [")[0].strip()
+        tag = "Físico"
+        texto_limpo = texto_sinal.strip()
+
+        if texto_limpo.startswith("[Opcional]"):
+            tag = "Opcional"
+            texto_limpo = texto_limpo.replace("[Opcional]", "", 1).strip()
+        elif texto_limpo.startswith("[Lógico]"):
+            tag = "Lógico"
+            texto_limpo = texto_limpo.replace("[Lógico]", "", 1).strip()
+
+        # Mantém a nota de Zona 1 na iniciação do 79 da função 21 conforme Item 4c
+        if "Iniciação 79" in texto_limpo and "[Somente em Zona 1" in texto_limpo:
+            chave_base = texto_limpo
+        else:
+            chave_base = texto_limpo.split(" [")[0].strip()
+
+        return tag, chave_base
 
     @staticmethod
     def _rotulo_curto_subfuncao(nome_sub):
-        """Retorna um identificador curto da subfunção para exibição agrupada."""
         if "[" in nome_sub and "]" in nome_sub:
             inicio = nome_sub.find("[") + 1
             fim = nome_sub.find("]")
             return nome_sub[inicio:fim]
         return nome_sub.split(" (")[0].strip()
 
+    @staticmethod
+    def _registrar_no_grupo(dicionario, chave_base, tipo_io, tag, cod, rotulo):
+        if chave_base not in dicionario:
+            dicionario[chave_base] = {
+                "tipo_io": tipo_io,
+                "tag": tag,
+                "codigos_ansi": [],
+                "subfuncoes": []
+            }
+        if cod not in dicionario[chave_base]["codigos_ansi"]:
+            dicionario[chave_base]["codigos_ansi"].append(cod)
+        if rotulo not in dicionario[chave_base]["subfuncoes"]:
+            dicionario[chave_base]["subfuncoes"].append(rotulo)
+
     def _agrupar_sinais_selecionados(self, selecionadas):
         """
-        Agrupa EAs, BIs e BOs físicas repetidas entre múltiplas funções selecionadas,
-        retornando dicionários ordenados de sinais únicos com a lista de funções que os utilizam.
+        Separa os sinais consolidados em:
+          1. Físicos Principais (eas_fis, bis_fis, bos_fis)
+          2. Itens com TAG 'Opcional' (itens_opcionais)
+          3. Itens com TAG 'Lógico' (itens_logicos)
         """
-        eas_agrupadas = {}
-        bis_agrupadas = {}
-        bos_agrupadas = {}
+        eas_fis, bis_fis, bos_fis = {}, {}, {}
+        itens_opcionais = {}
+        itens_logicos = {}
 
         for cod, nome_sub in selecionadas:
             rotulo = self._rotulo_curto_subfuncao(nome_sub)
             sub_dados = ANSI_DATABASE[cod]["subfuncoes"][nome_sub]
 
             for item in sub_dados["ea"]:
-                chave_base = self._extrair_chave_base_sinal(item)
-                if chave_base not in eas_agrupadas:
-                    eas_agrupadas[chave_base] = {"codigos_ansi": [], "subfuncoes": []}
-                if cod not in eas_agrupadas[chave_base]["codigos_ansi"]:
-                    eas_agrupadas[chave_base]["codigos_ansi"].append(cod)
-                if rotulo not in eas_agrupadas[chave_base]["subfuncoes"]:
-                    eas_agrupadas[chave_base]["subfuncoes"].append(rotulo)
+                tag, chave_base = self._extrair_chave_base_e_tag(item)
+                self._registrar_no_grupo(eas_fis, chave_base, "EA (Analógica)", tag, cod, rotulo)
 
             for item in sub_dados["bi"]:
-                chave_base = self._extrair_chave_base_sinal(item)
-                if chave_base not in bis_agrupadas:
-                    bis_agrupadas[chave_base] = {"codigos_ansi": [], "subfuncoes": []}
-                if cod not in bis_agrupadas[chave_base]["codigos_ansi"]:
-                    bis_agrupadas[chave_base]["codigos_ansi"].append(cod)
-                if rotulo not in bis_agrupadas[chave_base]["subfuncoes"]:
-                    bis_agrupadas[chave_base]["subfuncoes"].append(rotulo)
+                tag, chave_base = self._extrair_chave_base_e_tag(item)
+                if tag == "Opcional":
+                    self._registrar_no_grupo(itens_opcionais, chave_base, "BI (Entrada Digital)", "Opcional", cod, rotulo)
+                elif tag == "Lógico":
+                    self._registrar_no_grupo(itens_logicos, chave_base, "BI (Entrada Digital)", "Lógico", cod, rotulo)
+                else:
+                    self._registrar_no_grupo(bis_fis, chave_base, "BI (Entrada Digital)", "Físico", cod, rotulo)
 
             for item in sub_dados["bo"]:
-                chave_base = self._extrair_chave_base_sinal(item)
-                if chave_base not in bos_agrupadas:
-                    bos_agrupadas[chave_base] = {"codigos_ansi": [], "subfuncoes": []}
-                if cod not in bos_agrupadas[chave_base]["codigos_ansi"]:
-                    bos_agrupadas[chave_base]["codigos_ansi"].append(cod)
-                if rotulo not in bos_agrupadas[chave_base]["subfuncoes"]:
-                    bos_agrupadas[chave_base]["subfuncoes"].append(rotulo)
+                tag, chave_base = self._extrair_chave_base_e_tag(item)
+                if tag == "Opcional":
+                    self._registrar_no_grupo(itens_opcionais, chave_base, "BO (Saída Digital)", "Opcional", cod, rotulo)
+                elif tag == "Lógico":
+                    self._registrar_no_grupo(itens_logicos, chave_base, "BO (Saída Digital)", "Lógico", cod, rotulo)
+                else:
+                    self._registrar_no_grupo(bos_fis, chave_base, "BO (Saída Digital)", "Físico", cod, rotulo)
 
-        return eas_agrupadas, bis_agrupadas, bos_agrupadas
+        return eas_fis, bis_fis, bos_fis, itens_opcionais, itens_logicos
 
     def _atualizar_consolidado(self):
         selecionadas = [chave for chave, var in self.checkbox_vars.items() if var.get()]
@@ -1514,40 +1585,68 @@ class SPCSApp(tk.Tk):
         if not selecionadas:
             self.txt_consolidado.insert(
                 tk.END,
-                "Marque à esquerda as subfunções exigidas no Workstatement (ex: 21P, 50P, 51P, 79T)\n"
-                "para gerar a lista agrupada (sem duplicatas) de Entradas Analógicas (EAs), Entradas Digitais (BIs) e Saídas Digitais (BOs)."
+                "Marque à esquerda os itens exigidos no Workstatement (ex: 21P, 50P, 51P, 79T)\n"
+                "para gerar a lista consolidada separada entre Sinais Físicos Principais, Itens [Opcional] e Itens [Lógico]."
             )
             self.txt_consolidado.config(state=tk.DISABLED)
             return
 
-        eas_agrup, bis_agrup, bos_agrup = self._agrupar_sinais_selecionados(selecionadas)
+        eas_fis, bis_fis, bos_fis, opcionais, logicos = self._agrupar_sinais_selecionados(selecionadas)
         nomes_sel = [self._rotulo_curto_subfuncao(nome_sub) for _, nome_sub in selecionadas]
 
         cabecalho = (
             f"========================================================================\n"
-            f" SUBFUNÇÕES SELECIONADAS ({len(selecionadas)}): {', '.join(nomes_sel)}\n"
-            f" SINAIS COMUNS AGRUPADOS AUTOMATICAMENTE PARA DIMENSIONAMENTO DO IED\n"
+            f" ITENS SELECIONADOS ({len(selecionadas)}): {', '.join(nomes_sel)}\n"
             f"========================================================================\n\n"
         )
         self.txt_consolidado.insert(tk.END, cabecalho)
 
-        self.txt_consolidado.insert(tk.END, f"--- [1] ENTRADAS ANALÓGICAS ÚNICAS (EAs - Total: {len(eas_agrup)}) ---\n")
-        if eas_agrup:
-            for idx, (sinal, info) in enumerate(eas_agrup.items(), 1):
-                lista_fn = ", ".join(info["subfuncoes"])
-                self.txt_consolidado.insert(tk.END, f"  EA{idx:02d} [{lista_fn}]: {sinal}\n")
+        # BLOCO 1: SINAIS FÍSICOS PRINCIPAIS
+        self.txt_consolidado.insert(tk.END, f"--- [1] ENTRADAS ANALÓGICAS (EAs - Total: {len(eas_fis)}) ---\n")
+        if eas_fis:
+            for idx, (sinal, info) in enumerate(eas_fis.items(), 1):
+                self.txt_consolidado.insert(tk.END, f"  EA{idx:02d} [{', '.join(info['subfuncoes'])}]: {sinal}\n")
         else:
-            self.txt_consolidado.insert(tk.END, "  Nenhuma Entrada Analógica requerida pelas funções selecionadas.\n")
+            self.txt_consolidado.insert(tk.END, "  Nenhuma Entrada Analógica necessária para os itens selecionados.\n")
 
-        self.txt_consolidado.insert(tk.END, f"\n--- [2] ENTRADAS DIGITAIS ÚNICAS (BIs - Total Real: {len(bis_agrup)}) ---\n")
-        for idx, (sinal, info) in enumerate(bis_agrup.items(), 1):
-            lista_fn = ", ".join(info["subfuncoes"])
-            self.txt_consolidado.insert(tk.END, f"  BI{idx:02d} [{lista_fn}]: {sinal}\n")
+        self.txt_consolidado.insert(tk.END, f"\n--- [2] ENTRADAS DIGITAIS FÍSICAS (BIs - Total: {len(bis_fis)}) ---\n")
+        if bis_fis:
+            for idx, (sinal, info) in enumerate(bis_fis.items(), 1):
+                self.txt_consolidado.insert(tk.END, f"  BI{idx:02d} [{', '.join(info['subfuncoes'])}]: {sinal}\n")
+        else:
+            self.txt_consolidado.insert(tk.END, "  Nenhuma Entrada Digital obrigatória.\n")
 
-        self.txt_consolidado.insert(tk.END, f"\n--- [3] SAÍDAS DIGITAIS ÚNICAS (BOs - Total Real: {len(bos_agrup)}) ---\n")
-        for idx, (sinal, info) in enumerate(bos_agrup.items(), 1):
-            lista_fn = ", ".join(info["subfuncoes"])
-            self.txt_consolidado.insert(tk.END, f"  BO{idx:02d} [{lista_fn}]: {sinal}\n")
+        self.txt_consolidado.insert(tk.END, f"\n--- [3] SAÍDAS DIGITAIS FÍSICAS (BOs - Total: {len(bos_fis)}) ---\n")
+        if bos_fis:
+            for idx, (sinal, info) in enumerate(bos_fis.items(), 1):
+                self.txt_consolidado.insert(tk.END, f"  BO{idx:02d} [{', '.join(info['subfuncoes'])}]: {sinal}\n")
+        else:
+            self.txt_consolidado.insert(tk.END, "  Nenhuma Saída Digital física obrigatória.\n")
+
+        # BLOCO 2: ITENS OPCIONAIS (Separados conforme Item 4 do To-Do)
+        self.txt_consolidado.insert(tk.END, f"\n========================================================================\n")
+        self.txt_consolidado.insert(tk.END, f"--- [4] ITENS COM TAG [Opcional] (Total: {len(opcionais)}) ---\n")
+        if opcionais:
+            for idx, (sinal, info) in enumerate(opcionais.items(), 1):
+                prefixo = "BI_OPC" if "BI" in info["tipo_io"] else "BO_OPC"
+                self.txt_consolidado.insert(
+                    tk.END,
+                    f"  {prefixo}{idx:02d} [TAG: Opcional | {', '.join(info['subfuncoes'])}]: {sinal}\n"
+                )
+        else:
+            self.txt_consolidado.insert(tk.END, "  Nenhum item opcional associado.\n")
+
+        # BLOCO 3: ITENS LÓGICOS (Separados conforme Item 5 do To-Do)
+        self.txt_consolidado.insert(tk.END, f"\n========================================================================\n")
+        self.txt_consolidado.insert(tk.END, f"--- [5] ITENS COM TAG [Lógico] (Total: {len(logicos)}) ---\n")
+        if logicos:
+            for idx, (sinal, info) in enumerate(logicos.items(), 1):
+                self.txt_consolidado.insert(
+                    tk.END,
+                    f"  LOG{idx:02d} [TAG: Lógico | {', '.join(info['subfuncoes'])}]: {sinal}\n"
+                )
+        else:
+            self.txt_consolidado.insert(tk.END, "  Nenhum item lógico associado.\n")
 
         self.txt_consolidado.config(state=tk.DISABLED)
 
@@ -1559,52 +1658,95 @@ class SPCSApp(tk.Tk):
     def _exportar_csv(self):
         selecionadas = [chave for chave, var in self.checkbox_vars.items() if var.get()]
         if not selecionadas:
-            messagebox.showwarning("Aviso", "Selecione pelo menos uma subfunção ANSI antes de exportar.")
+            messagebox.showwarning("Aviso", "Selecione pelo menos um item ANSI antes de exportar.")
             return
 
         caminho = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("Arquivo CSV (Excel)", "*.csv"), ("Todos os arquivos", "*.*")],
-            initialfile="Mapa_IO_SPCS.csv"
+            initialfile="Mapa_IO_SPCS_Build_2_0.csv"
         )
         if not caminho:
             return
 
-        eas_agrup, bis_agrup, bos_agrup = self._agrupar_sinais_selecionados(selecionadas)
+        eas_fis, bis_fis, bos_fis, opcionais, logicos = self._agrupar_sinais_selecionados(selecionadas)
 
         try:
             with open(caminho, mode="w", newline="", encoding="utf-8-sig") as f:
                 writer = csv.writer(f, delimiter=";")
-                writer.writerow(["CODIGO_IO", "TIPO_IO", "FUNCOES_ANSI", "SUBFUNCOES_ASSOCIADAS", "DESCRICAO_SINAL"])
 
-                for idx, (sinal, info) in enumerate(eas_agrup.items(), 1):
+                # --------------------------------------------------------------
+                # TABELA 1: ENTRADAS E SAÍDAS FÍSICAS PRINCIPAIS
+                # --------------------------------------------------------------
+                writer.writerow(["=== 1. SINAIS FÍSICOS PRINCIPAIS (EAs, BIs e BOs) ===", "", "", "", "", ""])
+                writer.writerow(["CODIGO_IO", "TIPO_IO", "TAG", "FUNCOES_ANSI", "ITENS_ASSOCIADOS", "DESCRICAO_SINAL"])
+
+                for idx, (sinal, info) in enumerate(eas_fis.items(), 1):
                     writer.writerow([
                         f"EA{idx:02d}",
-                        "EA (Analógica)",
+                        info["tipo_io"],
+                        "Físico",
                         ", ".join(info["codigos_ansi"]),
                         ", ".join(info["subfuncoes"]),
                         sinal
                     ])
 
-                for idx, (sinal, info) in enumerate(bis_agrup.items(), 1):
+                for idx, (sinal, info) in enumerate(bis_fis.items(), 1):
                     writer.writerow([
                         f"BI{idx:02d}",
-                        "BI (Entrada Digital)",
+                        info["tipo_io"],
+                        "Físico",
                         ", ".join(info["codigos_ansi"]),
                         ", ".join(info["subfuncoes"]),
                         sinal
                     ])
 
-                for idx, (sinal, info) in enumerate(bos_agrup.items(), 1):
+                for idx, (sinal, info) in enumerate(bos_fis.items(), 1):
                     writer.writerow([
                         f"BO{idx:02d}",
-                        "BO (Saída Digital)",
+                        info["tipo_io"],
+                        "Físico",
                         ", ".join(info["codigos_ansi"]),
                         ", ".join(info["subfuncoes"]),
                         sinal
                     ])
 
-            messagebox.showinfo("Sucesso", f"Lista de I/O agrupada exportada com sucesso para:\n{caminho}")
+                # --------------------------------------------------------------
+                # TABELA 2: ITENS OPCIONAIS (SEPARADOS NO EXCEL - ITEM 4 DO TO-DO)
+                # --------------------------------------------------------------
+                writer.writerow([])
+                writer.writerow(["=== 2. ITENS OPCIONAIS (TAG: Opcional) ===", "", "", "", "", ""])
+                writer.writerow(["CODIGO_IO", "TIPO_IO", "TAG", "FUNCOES_ANSI", "ITENS_ASSOCIADOS", "DESCRICAO_SINAL"])
+
+                for idx, (sinal, info) in enumerate(opcionais.items(), 1):
+                    prefixo = "BI_OPC" if "BI" in info["tipo_io"] else "BO_OPC"
+                    writer.writerow([
+                        f"{prefixo}{idx:02d}",
+                        info["tipo_io"],
+                        "Opcional",
+                        ", ".join(info["codigos_ansi"]),
+                        ", ".join(info["subfuncoes"]),
+                        sinal
+                    ])
+
+                # --------------------------------------------------------------
+                # TABELA 3: ITENS LÓGICOS (SEPARADOS NO EXCEL - ITEM 5 DO TO-DO)
+                # --------------------------------------------------------------
+                writer.writerow([])
+                writer.writerow(["=== 3. ITENS LÓGICOS (TAG: Lógico) ===", "", "", "", "", ""])
+                writer.writerow(["CODIGO_IO", "TIPO_IO", "TAG", "FUNCOES_ANSI", "ITENS_ASSOCIADOS", "DESCRICAO_SINAL"])
+
+                for idx, (sinal, info) in enumerate(logicos.items(), 1):
+                    writer.writerow([
+                        f"LOG{idx:02d}",
+                        info["tipo_io"],
+                        "Lógico",
+                        ", ".join(info["codigos_ansi"]),
+                        ", ".join(info["subfuncoes"]),
+                        sinal
+                    ])
+
+            messagebox.showinfo("Sucesso", f"Planilha exportada com seções separadas (Físicos, Opcionais e Lógicos) em:\n{caminho}")
         except Exception as e:
             messagebox.showerror("Erro ao Exportar", str(e))
 
