@@ -3,8 +3,8 @@ from tkinter import ttk, filedialog, messagebox
 import csv
 
 # ==============================================================================
-# BANCO DE DADOS DE FUNÇÕES ANSI (PADRÃO IEEE C37.2 / TABELA ANSI SEL & SIEMENS)
-# Build 2.0 - 20/10/2026
+# BANCO DE DADOS DE FUNÇÕES ANSI (TABELA ANSI SEL & SIEMENS)
+# Build 3.0 - 22/10/2026
 # ==============================================================================
 # Sinais padronizados para permitir agrupamento automático (deduplicação)
 # e separação automática em 3 blocos no Consolidador e no Excel (.csv):
@@ -30,12 +30,13 @@ BO_TRIP_TR_BT = "Disparo (Trip) nas Bobinas de Abertura 1 e 2 do Disjuntor BT"
 BO_ACIONA_86 = "Acionamento do Relé de Bloqueio (86)"
 BO_BLOQUEIO_79 = "Bloqueio Definitivo do Religamento Automático (79 Lockout)"
 
-# --- Sinais com TAG [Opcional] (Separados no Excel conforme Item 4 do To-Do) ---
+# --- Sinais com TAG [Opcional] (Separados no Excel) ---
 BO_PARTIDA_79_OPC = "[Opcional] Partida de Religamento Automático (Iniciação 79)"
 BO_PARTIDA_79_Z1_OPC = "[Opcional] Partida de Religamento Automático (Iniciação 79) [Somente em Zona 1 ou via Teleproteção]"
 
-# --- Sinais com TAG [Lógico] (Separados no Excel conforme Item 5 do To-Do) ---
+# --- Sinais com TAG [Lógico] (Separados no Excel) ---
 BO_PARTIDA_50BF_LOG = "[Lógico] Partida de Falha de Disjuntor (Iniciação 50BF)"
+BO_PICKUP_LOG = "[Lógico] Sinal de Partida (Pickup) para Seletividade Lógica ou Oscilografia"
 BO_ALARME_SCADA_LOG = "[Lógico] Sinalização / Alarme de Atuação para SCADA e Anunciador (30)"
 
 
@@ -122,7 +123,7 @@ ANSI_DATABASE = {
                     "Alarme de Sobreexcitação V/Hz - 1º Estágio",
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip por Sobreexcitação]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -164,11 +165,11 @@ ANSI_DATABASE = {
                     "[Opcional] Alarme de Falha do Monitor de Temperatura (Autodiagnóstico)"
                 ],
                 "bo": [
-                    # Nota de revisão (Item 11): Confirmar padrão de BOs com o Patrick
-                    "Comando de Ligação de Ventilação Forçada do Transformador",
+                    # Nota de revisão: Confirmar padrão de BOs com o Patrick
+                    "Comando de Energização de Ventilação Forçada do Transformador",
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -237,17 +238,13 @@ ANSI_DATABASE = {
                     "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 32"
                 ],
                 "bo": [
-                    # Nota de revisão (Itens 11 e 13): Confirmar com o Patrick as BOs desta função
+                    # Nota de revisão: Confirmar com o Patrick as BOs desta função
                     BO_TRIP_LINHA,
                     BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
-    # ==========================================================================
-    # MARCADOR DE REVISÃO (ITEM 13): Revisado manualmente pelo Luidy até a 32.
-    # As funções abaixo (43 a 94) já receberam as padronizações globais do To-Do.
-    # ==========================================================================
     "43": {
         "nome": "Dispositivo de transferência ou seleção manual",
         "descricao": "Chave seletora operada manualmente no painel ou virtualmente no IED para transferir modos de comando (Local/Remoto) ou habilitar/desabilitar funções (79, 85, 51N, ERAC).",
@@ -259,7 +256,7 @@ ANSI_DATABASE = {
                     "Contato Posição 2 da Chave (Ex: Comando REMOTO / Função DESABILITADA)"
                 ],
                 "bo": [
-                    "Permissão ou Bloqueio na malha de comando/proteção",
+                    "[Opcional] Permissão ou Bloqueio na malha de comando/proteção",
                     BO_ALARME_SCADA_LOG
                 ]
             }
@@ -306,36 +303,23 @@ ANSI_DATABASE = {
     },
     "49": {
         "nome": "Relé térmico de máquina ou transformador",
-        "descricao": "Opera quando a temperatura de um equipamento excede o limite seguro, estimada por modelo térmico de corrente (I²t) no IED ou lida via sensores RTD (PT100) / contatos de imagem térmica.",
+        "descricao": "Monitora a imagem térmica dos enrolamentos do transformador (normalmente adquirida via monitor externo como o SEL-2414). ATENÇÃO: A aquisição pelo IED pode ser feita OU por medição analógica direta (sensores PT100 / 4-20 mA) OU por Entradas Digitais (BIs vindas dos contatos do monitor externo 2414).",
         "subfuncoes": {
-            "49 (Sobrecarga Térmica por Corrente - Modelo I²t no IED)": {
+            "49 Externo / 49RTD (Imagem Térmica dos Enrolamentos do TR - ex: SEL-2414)": {
                 "ea": [
-                    EA_TC_FASES
+                    "Sinais de RTD (PT100) ou Transdutores de 4-20 mA [Utilizado APENAS se a medição for analógica direta; não aplicável quando os estágios vêm por BIs do monitor externo]"
                 ],
                 "bi": [
-                    "[Opcional] Bloqueio Externo / Reset da Memória Térmica da Função 49"
-                ],
-                "bo": [
-                    BO_TRIP_TR_AT,
-                    BO_TRIP_TR_BT,
-                    BO_ALARME_SCADA_LOG
-                ]
-            },
-            "49RTD / 49 Externo (Imagem Térmica dos Enrolamentos do TR)": {
-                "ea": [
-                    "Sinais de RTD (PT100) ou Transdutores de 4-20 mA [Quando lidos via módulo analógico/fibra pelo IED]"
-                ],
-                "bi": [
-                    "Contato de Alarme de Temperatura do Enrolamento - 1º Estágio (49A)",
-                    "Contato de Trip de Temperatura do Enrolamento - 2º Estágio (49T)",
-                    "Contato de Partida de Ventilação Forçada",
+                    "Contato de Alarme de Temperatura do Enrolamento - 1º Estágio (49A) [Quando adquirido via BIs do monitor externo ex: SEL-2414]",
+                    "Contato de Trip de Temperatura do Enrolamento - 2º Estágio (49T) [Quando adquirido via BIs do monitor externo ex: SEL-2414]",
+                    "[Opcional] Contato de Partida de Ventilação Forçada",
                     "[Opcional] Alarme de Falha do Monitor de Temperatura (Autodiagnóstico)"
                 ],
                 "bo": [
-                    "Comando de Ligação de Ventilação Forçada do Transformador",
+                    "Comando de Energização de Ventilação Forçada do Transformador",
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -344,7 +328,7 @@ ANSI_DATABASE = {
     },
     "50": {
         "nome": "Relé de sobrecorrente instantâneo",
-        "descricao": "Opera sem atraso intencional (ou com tempo definido curto) para faltas severas. ATENÇÃO À NOMENCLATURA DE TERRA: Na SEL, 'N' é Neutro Medido (IN) e 'G' é Residual Calculado (3I0). Na SIEMENS/IEC é o inverso: '50N' é Residual Calculado (3I0) e '50G/50Ns' é o Neutro Medido.",
+        "descricao": "Opera sem atraso intencional (ou com tempo definido curto) para faltas severas. ATENÇÃO À NOMENCLATURA DE TERRA: Na SEL, 'N' é Neutro Medido (IN) e 'G' é Residual Calculado (3I0). Na SIEMENS/IEC é o inverso: '50N' é Residual Calculado (3I0) e '50G/50Ns' é o Neutro Medido. [Nota: Confirmar com o Patrick o uso da BO de Envio de Bloqueio de Seletividade Lógica ZSI]",
         "subfuncoes": {
             "50P / 50L (Sobrecorrente Instantânea de Fase)": {
                 "ea": [
@@ -356,8 +340,10 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
-                    "Envio de Sinal de Bloqueio de Seletividade Lógica (ZSI para relé a montante)",
+                    # Nota de revisão (Item 6): Confirmar com o Patrick esta BO de Seletividade Lógica
+                    "Envio de Sinal de Bloqueio de Seletividade Lógica (ZSI para relé a montante) [Confirmar com o Patrick]",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -373,6 +359,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -387,6 +374,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -400,6 +388,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -415,7 +404,7 @@ ANSI_DATABASE = {
                 "bo": [
                     "Re-Trip 50BF (1º Estágio instantâneo ou < 50 ms: novo comando nas Bobinas 1 e 2 do próprio disjuntor)",
                     "Disparo 50BF (2º Estágio ~100 a 250 ms: aciona Relé de Bloqueio 86BF para abrir disjuntores adjacentes da barra)",
-                    BO_BLOQUEIO_79,
+                    "Sinal de Bloqueio",
                     "Envio de Transferência Direta de Disparo (85 DTT TX) para abrir o terminal remoto",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -449,8 +438,8 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
-                    "Sinal de Partida (Pickup 51P) para Seletividade Lógica ou Oscilografia",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -465,6 +454,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -479,6 +469,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -492,6 +483,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -506,6 +498,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -517,9 +510,7 @@ ANSI_DATABASE = {
         "descricao": "Dispositivo de manobra e interrupção de correntes de carga e curto-circuito. Abaixo estão os sinais necessários no IED para comando, supervisão de estado e intertravamento do disjuntor.",
         "subfuncoes": {
             "52 (Comando e Supervisão de Disjuntor CA)": {
-                "ea": [
-                    EA_TC_FASES + " [Monitoramento de desgaste de contatos I²t e confirmação de corrente zero]"
-                ],
+                "ea": [],
                 "bi": [
                     BI_52AB,
                     BI_MOLA_SF6,
@@ -540,7 +531,7 @@ ANSI_DATABASE = {
     },
     "59": {
         "nome": "Relé de sobretensão",
-        "descricao": "Opera quando a tensão excede um valor predeterminado. Abaixo estão separadas as variantes de Sobretensão de Fase (59P), Deslocamento de Neutro por TP em Delta Aberto (59N), Residual Calculada (59G) e Sequência Negativa (59Q).",
+        "descricao": "Opera quando a tensão excede um valor predeterminado.",
         "subfuncoes": {
             "59P (Sobretensão de Fase / Fase-Fase)": {
                 "ea": [
@@ -552,7 +543,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
-                    "Envio de Transferência Direta de Disparo (85 DTT TX) [Comum em LTs longas por Efeito Ferranti]",
+                    "[Opcional] Envio de Transferência Direta de Disparo (85 DTT TX) [Comum em LTs longas por Efeito Ferranti]",
                     BO_BLOQUEIO_79,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -636,10 +627,10 @@ ANSI_DATABASE = {
             "62 (Temporizador Lógico Auxiliar)": {
                 "ea": [],
                 "bi": [
-                    "Sinal de Partida da Temporização (Ex: Atuação de relé externo ou condição lógica de intertravamento)"
+                    "[Lógico] Sinal de Partida da Temporização (Ex: Atuação de função de proteção ou condição lógica de intertravamento)"
                 ],
                 "bo": [
-                    "Sinal Temporizado de Disparo, Abertura ou Alarme após esgotamento do tempo (Pickup / Dropout Timer)"
+                    "[Lógico] Sinal Temporizado de Disparo, Abertura ou Alarme após esgotamento do tempo (Pickup / Dropout Timer)"
                 ]
             }
         }
@@ -657,7 +648,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -699,6 +690,9 @@ ANSI_DATABASE = {
             }
         }
     },
+    # ==========================================================================
+    # MARCADOR DE REVISÃO: Revisado manualmente pelo Luidy até a função 64.
+    # ==========================================================================
     "67": {
         "nome": "Relé direcional de sobrecorrente CA",
         "descricao": "Opera para um valor desejado de sobrecorrente fluindo em uma direção predeterminada (Frente / Reverso). ATENÇÃO: Na SEL, '67N' usa canal IN medido e '67G' usa residual calculado (3I0). Na SIEMENS/IEC, '67N' é o residual calculado (3I0) e '67G/67Ns' é o neutro medido.",
@@ -716,6 +710,7 @@ ANSI_DATABASE = {
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -733,6 +728,7 @@ ANSI_DATABASE = {
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -750,6 +746,7 @@ ANSI_DATABASE = {
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -765,6 +762,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -803,7 +801,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [Caso o estágio de Trip por Nível Crítico esteja habilitado]",
+                    BO_ACIONA_86,
                     BO_ALARME_SCADA_LOG
                 ]
             }
@@ -1058,7 +1056,7 @@ ANSI_DATABASE = {
                     "[Opcional] Chave de Bloqueio da Diferencial de Barras (43-87B)"
                 ],
                 "bo": [
-                    BO_ACIONA_86 + " [Relé 86B de todos os disjuntores conectados à barra em falta]",
+                    BO_ACIONA_86,
                     BO_BLOQUEIO_79,
                     "Envio de Transferência Direta de Disparo (85 DTT TX) para terminais remotos",
                     BO_ALARME_SCADA_LOG
@@ -1155,8 +1153,8 @@ ANSI_DATABASE = {
 class SPCSApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        # Item 1 & Item 7: Removida a inscrição tripla de autoria; título limpo com Build 2.0
-        self.title("SPCS IED Mapper — Mapeamento de EAs, BIs e BOs (Build 2.0)")
+        # Item 12 & 14: Build 3.0 (22/10/2026) e remoção do subtítulo de Engenharia
+        self.title("SPCS IED Mapper — Mapeamento de EAs, BIs e BOs (Build 3.0)")
         self.geometry("1240x760")
         self.minsize(1000, 640)
         self.configure(bg="#1e1e2e")
@@ -1164,17 +1162,17 @@ class SPCSApp(tk.Tk):
         self._configurar_estilo()
         self.checkbox_vars = {}
 
-        # Barra de Cabeçalho Superior (Sem repetição de autoria)
+        # Barra de Cabeçalho Superior Limpa (Item 14)
         frame_header_top = ttk.Frame(self)
         frame_header_top.pack(fill=tk.X, padx=14, pady=(10, 0))
         ttk.Label(
             frame_header_top,
-            text="⚡ SPCS IED Mapper — Engenharia de Proteção, Controle e Supervisão",
+            text="⚡ SPCS IED Mapper",
             style="Header.TLabel"
         ).pack(side=tk.LEFT)
         ttk.Label(
             frame_header_top,
-            text="Build 2.0 — 20/10/2026",
+            text="Build 3.0 — 22/10/2026",
             style="Build.TLabel"
         ).pack(side=tk.RIGHT)
 
@@ -1191,12 +1189,12 @@ class SPCSApp(tk.Tk):
         self._construir_aba_consulta()
         self._construir_aba_workstatement()
 
-        # Barra de Rodapé Fixa (Único local com a assinatura + Build 2.0 e Data)
+        # Barra de Rodapé Fixa (Build 3.0 + Assinatura Única)
         frame_footer = tk.Frame(self, bg="#181825", height=28)
         frame_footer.pack(fill=tk.X, side=tk.BOTTOM)
         lbl_footer_esq = tk.Label(
             frame_footer,
-            text="  Padrão ANSI / IEEE C37.2 | Build 2.0 (20/10/2026)",
+            text="  SPCS IED Mapper | Build 3.0 (22/10/2026)",
             bg="#181825",
             fg="#a6adc8",
             font=("Segoe UI", 9)
@@ -1231,6 +1229,37 @@ class SPCSApp(tk.Tk):
         style.configure("Accent.TButton", background=accent, foreground="#ffffff", font=("Segoe UI", 10, "bold"), padding=6)
         style.map("Accent.TButton", background=[("active", "#357abd")])
 
+        # Item 15: Estilo moderno e minimalista para as barras de rolagem (sem botões quadrados antigos)
+        style.layout(
+            "Modern.Vertical.TScrollbar",
+            [
+                (
+                    "Vertical.Scrollbar.trough",
+                    {
+                        "children": [
+                            ("Vertical.Scrollbar.thumb", {"expand": "1", "sticky": "nswe"})
+                        ],
+                        "sticky": "ns"
+                    }
+                )
+            ]
+        )
+        style.configure(
+            "Modern.Vertical.TScrollbar",
+            background="#44475a",
+            troughcolor="#181825",
+            bordercolor="#181825",
+            darkcolor="#44475a",
+            lightcolor="#44475a",
+            relief="flat",
+            borderwidth=0,
+            width=10
+        )
+        style.map(
+            "Modern.Vertical.TScrollbar",
+            background=[("pressed", "#8be9fd"), ("active", "#4a90e2")]
+        )
+
     # --------------------------------------------------------------------------
     # ABA 1: CONSULTA INDIVIDUAL POR FUNÇÃO ANSI
     # --------------------------------------------------------------------------
@@ -1241,7 +1270,8 @@ class SPCSApp(tk.Tk):
         frame_esq = ttk.Frame(paned, width=360)
         paned.add(frame_esq, minsize=300)
 
-        lbl_menu = ttk.Label(frame_esq, text="Tabela ANSI (Padrão SEL / IEEE C37.2)", style="Header.TLabel")
+        # Item 13: Removido "(Padrão SEL / IEEE C37.2)" do cabeçalho
+        lbl_menu = ttk.Label(frame_esq, text="Tabela ANSI", style="Header.TLabel")
         lbl_menu.pack(anchor="w", padx=5, pady=(5, 2))
 
         frame_busca = ttk.Frame(frame_esq)
@@ -1255,7 +1285,11 @@ class SPCSApp(tk.Tk):
         frame_lista = ttk.Frame(frame_esq)
         frame_lista.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        scrollbar_lista = ttk.Scrollbar(frame_lista, orient=tk.VERTICAL)
+        scrollbar_lista = ttk.Scrollbar(
+            frame_lista,
+            orient=tk.VERTICAL,
+            style="Modern.Vertical.TScrollbar"
+        )
         self.listbox_ansi = tk.Listbox(
             frame_lista,
             yscrollcommand=scrollbar_lista.set,
@@ -1271,7 +1305,7 @@ class SPCSApp(tk.Tk):
             highlightcolor="#4a90e2"
         )
         scrollbar_lista.config(command=self.listbox_ansi.yview)
-        scrollbar_lista.pack(side=tk.RIGHT, fill=tk.Y)
+        scrollbar_lista.pack(side=tk.RIGHT, fill=tk.Y, padx=(2, 0))
         self.listbox_ansi.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.listbox_ansi.bind("<<ListboxSelect>>", self._ao_selecionar_funcao)
 
@@ -1284,7 +1318,11 @@ class SPCSApp(tk.Tk):
         frame_texto = ttk.Frame(frame_dir)
         frame_texto.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        scroll_texto = ttk.Scrollbar(frame_texto, orient=tk.VERTICAL)
+        scroll_texto = ttk.Scrollbar(
+            frame_texto,
+            orient=tk.VERTICAL,
+            style="Modern.Vertical.TScrollbar"
+        )
         self.txt_detalhes = tk.Text(
             frame_texto,
             yscrollcommand=scroll_texto.set,
@@ -1298,10 +1336,10 @@ class SPCSApp(tk.Tk):
             state=tk.DISABLED
         )
         scroll_texto.config(command=self.txt_detalhes.yview)
-        scroll_texto.pack(side=tk.RIGHT, fill=tk.Y)
+        scroll_texto.pack(side=tk.RIGHT, fill=tk.Y, padx=(2, 0))
         self.txt_detalhes.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Tags de formatação visual (incluindo destaque para [Opcional] e [Lógico])
+        # Tags de formatação visual
         self.txt_detalhes.tag_configure("desc", foreground="#f1fa8c", font=("Segoe UI", 10, "italic"), spacing3=10)
         self.txt_detalhes.tag_configure("subfuncao_header", background="#343746", foreground="#ffffff", font=("Segoe UI", 11, "bold"), spacing1=14, spacing3=6)
         self.txt_detalhes.tag_configure("secao_ea", foreground="#8be9fd", font=("Segoe UI", 10, "bold"), spacing1=6, spacing3=2)
@@ -1369,7 +1407,6 @@ class SPCSApp(tk.Tk):
                 for item in sub_dados["ea"]:
                     self._inserir_item_formatado(item)
             else:
-                # Item 10 do To-Do: Alterado para "para este item"
                 self.txt_detalhes.insert(tk.END, "• Nenhuma entrada analógica de TC/TP necessária para este item.\n", "item_vazio")
 
             # Entradas Digitais (BIs)
@@ -1403,7 +1440,12 @@ class SPCSApp(tk.Tk):
         ).pack(anchor="w", padx=5, pady=5)
 
         self.canvas_chk = tk.Canvas(frame_check, bg="#282a36", highlightthickness=0)
-        scroll_chk = ttk.Scrollbar(frame_check, orient=tk.VERTICAL, command=self.canvas_chk.yview)
+        scroll_chk = ttk.Scrollbar(
+            frame_check,
+            orient=tk.VERTICAL,
+            command=self.canvas_chk.yview,
+            style="Modern.Vertical.TScrollbar"
+        )
         self.frame_interno_chk = tk.Frame(self.canvas_chk, bg="#282a36")
 
         self.frame_interno_chk.bind(
@@ -1422,7 +1464,7 @@ class SPCSApp(tk.Tk):
         self.canvas_chk.bind("<Leave>", lambda e: self.canvas_chk.unbind_all("<MouseWheel>"))
 
         self.canvas_chk.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
-        scroll_chk.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 5), pady=5)
+        scroll_chk.pack(side=tk.RIGHT, fill=tk.Y, padx=(2, 5), pady=5)
 
         for codigo, dados in ANSI_DATABASE.items():
             lbl_cat = tk.Label(
@@ -1469,7 +1511,11 @@ class SPCSApp(tk.Tk):
         frame_txt_cons = ttk.Frame(frame_res)
         frame_txt_cons.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        scroll_cons = ttk.Scrollbar(frame_txt_cons, orient=tk.VERTICAL)
+        scroll_cons = ttk.Scrollbar(
+            frame_txt_cons,
+            orient=tk.VERTICAL,
+            style="Modern.Vertical.TScrollbar"
+        )
         self.txt_consolidado = tk.Text(
             frame_txt_cons,
             yscrollcommand=scroll_cons.set,
@@ -1483,7 +1529,7 @@ class SPCSApp(tk.Tk):
             state=tk.DISABLED
         )
         scroll_cons.config(command=self.txt_consolidado.yview)
-        scroll_cons.pack(side=tk.RIGHT, fill=tk.Y)
+        scroll_cons.pack(side=tk.RIGHT, fill=tk.Y, padx=(2, 0))
         self.txt_consolidado.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._atualizar_consolidado()
@@ -1507,7 +1553,7 @@ class SPCSApp(tk.Tk):
             tag = "Lógico"
             texto_limpo = texto_limpo.replace("[Lógico]", "", 1).strip()
 
-        # Mantém a nota de Zona 1 na iniciação do 79 da função 21 conforme Item 4c
+        # Mantém a nota de Zona 1 na iniciação do 79 da função 21
         if "Iniciação 79" in texto_limpo and "[Somente em Zona 1" in texto_limpo:
             chave_base = texto_limpo
         else:
@@ -1623,7 +1669,7 @@ class SPCSApp(tk.Tk):
         else:
             self.txt_consolidado.insert(tk.END, "  Nenhuma Saída Digital física obrigatória.\n")
 
-        # BLOCO 2: ITENS OPCIONAIS (Separados conforme Item 4 do To-Do)
+        # BLOCO 2: ITENS OPCIONAIS
         self.txt_consolidado.insert(tk.END, f"\n========================================================================\n")
         self.txt_consolidado.insert(tk.END, f"--- [4] ITENS COM TAG [Opcional] (Total: {len(opcionais)}) ---\n")
         if opcionais:
@@ -1636,7 +1682,7 @@ class SPCSApp(tk.Tk):
         else:
             self.txt_consolidado.insert(tk.END, "  Nenhum item opcional associado.\n")
 
-        # BLOCO 3: ITENS LÓGICOS (Separados conforme Item 5 do To-Do)
+        # BLOCO 3: ITENS LÓGICOS
         self.txt_consolidado.insert(tk.END, f"\n========================================================================\n")
         self.txt_consolidado.insert(tk.END, f"--- [5] ITENS COM TAG [Lógico] (Total: {len(logicos)}) ---\n")
         if logicos:
@@ -1664,7 +1710,7 @@ class SPCSApp(tk.Tk):
         caminho = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("Arquivo CSV (Excel)", "*.csv"), ("Todos os arquivos", "*.*")],
-            initialfile="Mapa_IO_SPCS_Build_2_0.csv"
+            initialfile="Mapa_IO_SPCS_Build_3_0.csv"
         )
         if not caminho:
             return
@@ -1712,7 +1758,7 @@ class SPCSApp(tk.Tk):
                     ])
 
                 # --------------------------------------------------------------
-                # TABELA 2: ITENS OPCIONAIS (SEPARADOS NO EXCEL - ITEM 4 DO TO-DO)
+                # TABELA 2: ITENS OPCIONAIS (SEPARADOS NO EXCEL)
                 # --------------------------------------------------------------
                 writer.writerow([])
                 writer.writerow(["=== 2. ITENS OPCIONAIS (TAG: Opcional) ===", "", "", "", "", ""])
@@ -1730,7 +1776,7 @@ class SPCSApp(tk.Tk):
                     ])
 
                 # --------------------------------------------------------------
-                # TABELA 3: ITENS LÓGICOS (SEPARADOS NO EXCEL - ITEM 5 DO TO-DO)
+                # TABELA 3: ITENS LÓGICOS (SEPARADOS NO EXCEL)
                 # --------------------------------------------------------------
                 writer.writerow([])
                 writer.writerow(["=== 3. ITENS LÓGICOS (TAG: Lógico) ===", "", "", "", "", ""])
