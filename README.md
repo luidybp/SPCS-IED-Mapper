@@ -18,4 +18,4 @@ Auxiliar projetistas e engenheiros de SPCS na tradução dos requisitos do *Work
   python spcs_ied_mapper.py
 
   Para compilar:
-  python -m PyInstaller --onefile --noconsole --name "SPCS_IED_Mapper" spcs_ied_mapper.py
+  python -m PyInstaller --onefile --noconsole --name "SPCS_IED_Mapper" main.py

@@ -1,16 +1,7 @@
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import csv
-
 # ==============================================================================
-# BANCO DE DADOS DE FUNÇÕES ANSI (PADRÃO IEEE C37.2 / TABELA ANSI SEL & SIEMENS)
-# Build 2.0 - 20/10/2026
-# ==============================================================================
-# Sinais padronizados para permitir agrupamento automático (deduplicação)
-# e separação automática em 3 blocos no Consolidador e no Excel (.csv):
-#   1. Sinais Físicos Principais (EAs, BIs e BOs obrigatórias)
-#   2. Sinais Opcionais (TAG [Opcional])
-#   3. Sinais Lógicos (TAG [Lógico])
+# MÓDULO 1: BANCO DE DADOS DE FUNÇÕES ANSI (funcoes_ansi.py)
+# Contém todas as constantes de sinais (EAs, BIs, BOs) e descrições das funções.
+# Para alterar textos, adicionar entradas/saídas ou novas funções, edite aqui.
 # ==============================================================================
 
 # --- Entradas Analógicas Padrão (EAs) ---
@@ -30,15 +21,17 @@ BO_TRIP_TR_BT = "Disparo (Trip) nas Bobinas de Abertura 1 e 2 do Disjuntor BT"
 BO_ACIONA_86 = "Acionamento do Relé de Bloqueio (86)"
 BO_BLOQUEIO_79 = "Bloqueio Definitivo do Religamento Automático (79 Lockout)"
 
-# --- Sinais com TAG [Opcional] (Separados no Excel conforme Item 4 do To-Do) ---
+# --- Sinais com TAG [Opcional] (Separados no Excel) ---
 BO_PARTIDA_79_OPC = "[Opcional] Partida de Religamento Automático (Iniciação 79)"
 BO_PARTIDA_79_Z1_OPC = "[Opcional] Partida de Religamento Automático (Iniciação 79) [Somente em Zona 1 ou via Teleproteção]"
 
-# --- Sinais com TAG [Lógico] (Separados no Excel conforme Item 5 do To-Do) ---
+# --- Sinais com TAG [Lógico] (Separados no Excel) ---
 BO_PARTIDA_50BF_LOG = "[Lógico] Partida de Falha de Disjuntor (Iniciação 50BF)"
+BO_PICKUP_LOG = "[Lógico] Sinal de Partida (Pickup) para Seletividade Lógica ou Oscilografia"
 BO_ALARME_SCADA_LOG = "[Lógico] Sinalização / Alarme de Atuação para SCADA e Anunciador (30)"
 
 
+# --- Dicionário Principal das Funções de Proteção ANSI ---
 ANSI_DATABASE = {
     "21": {
         "nome": "Relé de distância",
@@ -63,8 +56,6 @@ ANSI_DATABASE = {
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ],
-                # "sel": "TODO: SEL-421/411L/311L -> M1P, M2P, M3P, Z1T, Z2T, LOP",
-                # "siemens": "TODO: SIPROTEC 4 (7SA522/7SA6) / SIPROTEC 5 (7SA87)"
             },
             "21N / 21G (Distância de Terra)": {
                 "ea": [
@@ -122,7 +113,7 @@ ANSI_DATABASE = {
                     "Alarme de Sobreexcitação V/Hz - 1º Estágio",
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip por Sobreexcitação]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -164,11 +155,11 @@ ANSI_DATABASE = {
                     "[Opcional] Alarme de Falha do Monitor de Temperatura (Autodiagnóstico)"
                 ],
                 "bo": [
-                    # Nota de revisão (Item 11): Confirmar padrão de BOs com o Patrick
-                    "Comando de Ligação de Ventilação Forçada do Transformador",
+                    # Nota de revisão: Confirmar padrão de BOs com o Patrick
+                    "Comando de Energização de Ventilação Forçada do Transformador",
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -237,17 +228,13 @@ ANSI_DATABASE = {
                     "[Opcional] Bloqueio Externo por Chave ou Condição Lógica da Função 32"
                 ],
                 "bo": [
-                    # Nota de revisão (Itens 11 e 13): Confirmar com o Patrick as BOs desta função
+                    # Nota de revisão: Confirmar com o Patrick as BOs desta função
                     BO_TRIP_LINHA,
                     BO_ALARME_SCADA_LOG
                 ]
             }
         }
     },
-    # ==========================================================================
-    # MARCADOR DE REVISÃO (ITEM 13): Revisado manualmente pelo Luidy até a 32.
-    # As funções abaixo (43 a 94) já receberam as padronizações globais do To-Do.
-    # ==========================================================================
     "43": {
         "nome": "Dispositivo de transferência ou seleção manual",
         "descricao": "Chave seletora operada manualmente no painel ou virtualmente no IED para transferir modos de comando (Local/Remoto) ou habilitar/desabilitar funções (79, 85, 51N, ERAC).",
@@ -259,7 +246,7 @@ ANSI_DATABASE = {
                     "Contato Posição 2 da Chave (Ex: Comando REMOTO / Função DESABILITADA)"
                 ],
                 "bo": [
-                    "Permissão ou Bloqueio na malha de comando/proteção",
+                    "[Opcional] Permissão ou Bloqueio na malha de comando/proteção",
                     BO_ALARME_SCADA_LOG
                 ]
             }
@@ -306,36 +293,23 @@ ANSI_DATABASE = {
     },
     "49": {
         "nome": "Relé térmico de máquina ou transformador",
-        "descricao": "Opera quando a temperatura de um equipamento excede o limite seguro, estimada por modelo térmico de corrente (I²t) no IED ou lida via sensores RTD (PT100) / contatos de imagem térmica.",
+        "descricao": "Monitora a imagem térmica dos enrolamentos do transformador (normalmente adquirida via monitor externo como o SEL-2414). ATENÇÃO: A aquisição pelo IED pode ser feita OU por medição analógica direta (sensores PT100 / 4-20 mA) OU por Entradas Digitais (BIs vindas dos contatos do monitor externo 2414).",
         "subfuncoes": {
-            "49 (Sobrecarga Térmica por Corrente - Modelo I²t no IED)": {
+            "49 Externo / 49RTD (Imagem Térmica dos Enrolamentos do TR - ex: SEL-2414)": {
                 "ea": [
-                    EA_TC_FASES
+                    "Sinais de RTD (PT100) ou Transdutores de 4-20 mA [Utilizado APENAS se a medição for analógica direta; não aplicável quando os estágios vêm por BIs do monitor externo]"
                 ],
                 "bi": [
-                    "[Opcional] Bloqueio Externo / Reset da Memória Térmica da Função 49"
-                ],
-                "bo": [
-                    BO_TRIP_TR_AT,
-                    BO_TRIP_TR_BT,
-                    BO_ALARME_SCADA_LOG
-                ]
-            },
-            "49RTD / 49 Externo (Imagem Térmica dos Enrolamentos do TR)": {
-                "ea": [
-                    "Sinais de RTD (PT100) ou Transdutores de 4-20 mA [Quando lidos via módulo analógico/fibra pelo IED]"
-                ],
-                "bi": [
-                    "Contato de Alarme de Temperatura do Enrolamento - 1º Estágio (49A)",
-                    "Contato de Trip de Temperatura do Enrolamento - 2º Estágio (49T)",
-                    "Contato de Partida de Ventilação Forçada",
+                    "Contato de Alarme de Temperatura do Enrolamento - 1º Estágio (49A) [Quando adquirido via BIs do monitor externo ex: SEL-2414]",
+                    "Contato de Trip de Temperatura do Enrolamento - 2º Estágio (49T) [Quando adquirido via BIs do monitor externo ex: SEL-2414]",
+                    "[Opcional] Contato de Partida de Ventilação Forçada",
                     "[Opcional] Alarme de Falha do Monitor de Temperatura (Autodiagnóstico)"
                 ],
                 "bo": [
-                    "Comando de Ligação de Ventilação Forçada do Transformador",
+                    "Comando de Energização de Ventilação Forçada do Transformador",
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -344,7 +318,7 @@ ANSI_DATABASE = {
     },
     "50": {
         "nome": "Relé de sobrecorrente instantâneo",
-        "descricao": "Opera sem atraso intencional (ou com tempo definido curto) para faltas severas. ATENÇÃO À NOMENCLATURA DE TERRA: Na SEL, 'N' é Neutro Medido (IN) e 'G' é Residual Calculado (3I0). Na SIEMENS/IEC é o inverso: '50N' é Residual Calculado (3I0) e '50G/50Ns' é o Neutro Medido.",
+        "descricao": "Opera sem atraso intencional (ou com tempo definido curto) para faltas severas. ATENÇÃO À NOMENCLATURA DE TERRA: Na SEL, 'N' é Neutro Medido (IN) e 'G' é Residual Calculado (3I0). Na SIEMENS/IEC é o inverso: '50N' é Residual Calculado (3I0) e '50G/50Ns' é o Neutro Medido. [Nota: Confirmar com o Patrick o uso da BO de Envio de Bloqueio de Seletividade Lógica ZSI]",
         "subfuncoes": {
             "50P / 50L (Sobrecorrente Instantânea de Fase)": {
                 "ea": [
@@ -356,8 +330,9 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
-                    "Envio de Sinal de Bloqueio de Seletividade Lógica (ZSI para relé a montante)",
+                    "Envio de Sinal de Bloqueio de Seletividade Lógica (ZSI para relé a montante) [Confirmar com o Patrick]",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -373,6 +348,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -387,6 +363,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -400,6 +377,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -415,7 +393,7 @@ ANSI_DATABASE = {
                 "bo": [
                     "Re-Trip 50BF (1º Estágio instantâneo ou < 50 ms: novo comando nas Bobinas 1 e 2 do próprio disjuntor)",
                     "Disparo 50BF (2º Estágio ~100 a 250 ms: aciona Relé de Bloqueio 86BF para abrir disjuntores adjacentes da barra)",
-                    BO_BLOQUEIO_79,
+                    "Sinal de Bloqueio",
                     "Envio de Transferência Direta de Disparo (85 DTT TX) para abrir o terminal remoto",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -449,8 +427,8 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
-                    "Sinal de Partida (Pickup 51P) para Seletividade Lógica ou Oscilografia",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -465,6 +443,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -479,6 +458,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -492,6 +472,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -506,6 +487,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -517,9 +499,7 @@ ANSI_DATABASE = {
         "descricao": "Dispositivo de manobra e interrupção de correntes de carga e curto-circuito. Abaixo estão os sinais necessários no IED para comando, supervisão de estado e intertravamento do disjuntor.",
         "subfuncoes": {
             "52 (Comando e Supervisão de Disjuntor CA)": {
-                "ea": [
-                    EA_TC_FASES + " [Monitoramento de desgaste de contatos I²t e confirmação de corrente zero]"
-                ],
+                "ea": [],
                 "bi": [
                     BI_52AB,
                     BI_MOLA_SF6,
@@ -540,7 +520,7 @@ ANSI_DATABASE = {
     },
     "59": {
         "nome": "Relé de sobretensão",
-        "descricao": "Opera quando a tensão excede um valor predeterminado. Abaixo estão separadas as variantes de Sobretensão de Fase (59P), Deslocamento de Neutro por TP em Delta Aberto (59N), Residual Calculada (59G) e Sequência Negativa (59Q).",
+        "descricao": "Opera quando a tensão excede um valor predeterminado.",
         "subfuncoes": {
             "59P (Sobretensão de Fase / Fase-Fase)": {
                 "ea": [
@@ -552,7 +532,7 @@ ANSI_DATABASE = {
                 ],
                 "bo": [
                     BO_TRIP_LINHA,
-                    "Envio de Transferência Direta de Disparo (85 DTT TX) [Comum em LTs longas por Efeito Ferranti]",
+                    "[Opcional] Envio de Transferência Direta de Disparo (85 DTT TX) [Comum em LTs longas por Efeito Ferranti]",
                     BO_BLOQUEIO_79,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -636,10 +616,10 @@ ANSI_DATABASE = {
             "62 (Temporizador Lógico Auxiliar)": {
                 "ea": [],
                 "bi": [
-                    "Sinal de Partida da Temporização (Ex: Atuação de relé externo ou condição lógica de intertravamento)"
+                    "[Lógico] Sinal de Partida da Temporização (Ex: Atuação de função de proteção ou condição lógica de intertravamento)"
                 ],
                 "bo": [
-                    "Sinal Temporizado de Disparo, Abertura ou Alarme após esgotamento do tempo (Pickup / Dropout Timer)"
+                    "[Lógico] Sinal Temporizado de Disparo, Abertura ou Alarme após esgotamento do tempo (Pickup / Dropout Timer)"
                 ]
             }
         }
@@ -657,7 +637,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [2º Estágio de Trip]",
+                    BO_ACIONA_86,
                     BO_PARTIDA_50BF_LOG + " [Supervisionada por contato 52a]",
                     BO_ALARME_SCADA_LOG
                 ]
@@ -716,6 +696,7 @@ ANSI_DATABASE = {
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -733,6 +714,7 @@ ANSI_DATABASE = {
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -750,6 +732,7 @@ ANSI_DATABASE = {
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
                     BO_PARTIDA_79_OPC,
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -765,6 +748,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_LINHA,
                     "Envio de Sinal de Teleproteção (85 TX)",
+                    BO_PICKUP_LOG,
                     BO_PARTIDA_50BF_LOG,
                     BO_ALARME_SCADA_LOG
                 ]
@@ -803,7 +787,7 @@ ANSI_DATABASE = {
                 "bo": [
                     BO_TRIP_TR_AT,
                     BO_TRIP_TR_BT,
-                    BO_ACIONA_86 + " [Caso o estágio de Trip por Nível Crítico esteja habilitado]",
+                    BO_ACIONA_86,
                     BO_ALARME_SCADA_LOG
                 ]
             }
@@ -1058,7 +1042,7 @@ ANSI_DATABASE = {
                     "[Opcional] Chave de Bloqueio da Diferencial de Barras (43-87B)"
                 ],
                 "bo": [
-                    BO_ACIONA_86 + " [Relé 86B de todos os disjuntores conectados à barra em falta]",
+                    BO_ACIONA_86,
                     BO_BLOQUEIO_79,
                     "Envio de Transferência Direta de Disparo (85 DTT TX) para terminais remotos",
                     BO_ALARME_SCADA_LOG
@@ -1147,610 +1131,3 @@ ANSI_DATABASE = {
         }
     }
 }
-
-
-# ==============================================================================
-# CLASSE PRINCIPAL DA INTERFACE GRÁFICA (GUI WINDOWS)
-# ==============================================================================
-class SPCSApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        # Item 1 & Item 7: Removida a inscrição tripla de autoria; título limpo com Build 2.0
-        self.title("SPCS IED Mapper — Mapeamento de EAs, BIs e BOs (Build 2.0)")
-        self.geometry("1240x760")
-        self.minsize(1000, 640)
-        self.configure(bg="#1e1e2e")
-
-        self._configurar_estilo()
-        self.checkbox_vars = {}
-
-        # Barra de Cabeçalho Superior (Sem repetição de autoria)
-        frame_header_top = ttk.Frame(self)
-        frame_header_top.pack(fill=tk.X, padx=14, pady=(10, 0))
-        ttk.Label(
-            frame_header_top,
-            text="⚡ SPCS IED Mapper — Engenharia de Proteção, Controle e Supervisão",
-            style="Header.TLabel"
-        ).pack(side=tk.LEFT)
-        ttk.Label(
-            frame_header_top,
-            text="Build 2.0 — 20/10/2026",
-            style="Build.TLabel"
-        ).pack(side=tk.RIGHT)
-
-        # Abas Principais
-        self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
-
-        self.tab_consulta = ttk.Frame(self.notebook)
-        self.tab_workstatement = ttk.Frame(self.notebook)
-
-        self.notebook.add(self.tab_consulta, text="  [1] Consulta por Função ANSI  ")
-        self.notebook.add(self.tab_workstatement, text="  [2] Consolidador de Workstatement (Lista de I/O Agrupada)  ")
-
-        self._construir_aba_consulta()
-        self._construir_aba_workstatement()
-
-        # Barra de Rodapé Fixa (Único local com a assinatura + Build 2.0 e Data)
-        frame_footer = tk.Frame(self, bg="#181825", height=28)
-        frame_footer.pack(fill=tk.X, side=tk.BOTTOM)
-        lbl_footer_esq = tk.Label(
-            frame_footer,
-            text="  Padrão ANSI / IEEE C37.2 | Build 2.0 (20/10/2026)",
-            bg="#181825",
-            fg="#a6adc8",
-            font=("Segoe UI", 9)
-        )
-        lbl_footer_esq.pack(side=tk.LEFT, pady=4)
-        lbl_footer_dir = tk.Label(
-            frame_footer,
-            text="Desenvolvido por Luidy Bueno Paviani  ",
-            bg="#181825",
-            fg="#8be9fd",
-            font=("Segoe UI", 9, "bold")
-        )
-        lbl_footer_dir.pack(side=tk.RIGHT, pady=4)
-
-    def _configurar_estilo(self):
-        style = ttk.Style(self)
-        style.theme_use("clam")
-
-        bg_dark = "#1e1e2e"
-        bg_panel = "#282a36"
-        fg_text = "#f8f8f2"
-        accent = "#4a90e2"
-
-        style.configure("TFrame", background=bg_dark)
-        style.configure("Panel.TFrame", background=bg_panel)
-        style.configure("TLabel", background=bg_dark, foreground=fg_text, font=("Segoe UI", 10))
-        style.configure("Header.TLabel", background=bg_dark, foreground="#8be9fd", font=("Segoe UI", 12, "bold"))
-        style.configure("Build.TLabel", background=bg_dark, foreground="#f1fa8c", font=("Segoe UI", 10, "bold"))
-        style.configure("TNotebook", background=bg_dark, borderwidth=0)
-        style.configure("TNotebook.Tab", background="#343746", foreground=fg_text, padding=[12, 6], font=("Segoe UI", 10, "bold"))
-        style.map("TNotebook.Tab", background=[("selected", accent)], foreground=[("selected", "#ffffff")])
-        style.configure("Accent.TButton", background=accent, foreground="#ffffff", font=("Segoe UI", 10, "bold"), padding=6)
-        style.map("Accent.TButton", background=[("active", "#357abd")])
-
-    # --------------------------------------------------------------------------
-    # ABA 1: CONSULTA INDIVIDUAL POR FUNÇÃO ANSI
-    # --------------------------------------------------------------------------
-    def _construir_aba_consulta(self):
-        paned = tk.PanedWindow(self.tab_consulta, orient=tk.HORIZONTAL, bg="#1e1e2e", sashwidth=6, bd=0)
-        paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        frame_esq = ttk.Frame(paned, width=360)
-        paned.add(frame_esq, minsize=300)
-
-        lbl_menu = ttk.Label(frame_esq, text="Tabela ANSI (Padrão SEL / IEEE C37.2)", style="Header.TLabel")
-        lbl_menu.pack(anchor="w", padx=5, pady=(5, 2))
-
-        frame_busca = ttk.Frame(frame_esq)
-        frame_busca.pack(fill=tk.X, padx=5, pady=5)
-        ttk.Label(frame_busca, text="Filtrar:").pack(side=tk.LEFT, padx=(0, 5))
-        self.var_busca = tk.StringVar()
-        self.var_busca.trace_add("write", self._filtrar_lista)
-        entry_busca = ttk.Entry(frame_busca, textvariable=self.var_busca, font=("Segoe UI", 10))
-        entry_busca.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        frame_lista = ttk.Frame(frame_esq)
-        frame_lista.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        scrollbar_lista = ttk.Scrollbar(frame_lista, orient=tk.VERTICAL)
-        self.listbox_ansi = tk.Listbox(
-            frame_lista,
-            yscrollcommand=scrollbar_lista.set,
-            exportselection=False,
-            bg="#282a36",
-            fg="#f8f8f2",
-            selectbackground="#4a90e2",
-            selectforeground="#ffffff",
-            font=("Consolas", 10, "bold"),
-            activestyle="none",
-            bd=0,
-            highlightthickness=1,
-            highlightcolor="#4a90e2"
-        )
-        scrollbar_lista.config(command=self.listbox_ansi.yview)
-        scrollbar_lista.pack(side=tk.RIGHT, fill=tk.Y)
-        self.listbox_ansi.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.listbox_ansi.bind("<<ListboxSelect>>", self._ao_selecionar_funcao)
-
-        frame_dir = ttk.Frame(paned)
-        paned.add(frame_dir, minsize=620)
-
-        self.lbl_titulo_funcao = ttk.Label(frame_dir, text="Selecione uma função ANSI no menu ao lado", style="Header.TLabel")
-        self.lbl_titulo_funcao.pack(anchor="w", padx=10, pady=(5, 5))
-
-        frame_texto = ttk.Frame(frame_dir)
-        frame_texto.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-
-        scroll_texto = ttk.Scrollbar(frame_texto, orient=tk.VERTICAL)
-        self.txt_detalhes = tk.Text(
-            frame_texto,
-            yscrollcommand=scroll_texto.set,
-            bg="#282a36",
-            fg="#f8f8f2",
-            font=("Segoe UI", 10),
-            wrap=tk.WORD,
-            padx=15,
-            pady=15,
-            bd=0,
-            state=tk.DISABLED
-        )
-        scroll_texto.config(command=self.txt_detalhes.yview)
-        scroll_texto.pack(side=tk.RIGHT, fill=tk.Y)
-        self.txt_detalhes.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        # Tags de formatação visual (incluindo destaque para [Opcional] e [Lógico])
-        self.txt_detalhes.tag_configure("desc", foreground="#f1fa8c", font=("Segoe UI", 10, "italic"), spacing3=10)
-        self.txt_detalhes.tag_configure("subfuncao_header", background="#343746", foreground="#ffffff", font=("Segoe UI", 11, "bold"), spacing1=14, spacing3=6)
-        self.txt_detalhes.tag_configure("secao_ea", foreground="#8be9fd", font=("Segoe UI", 10, "bold"), spacing1=6, spacing3=2)
-        self.txt_detalhes.tag_configure("secao_bi", foreground="#50fa7b", font=("Segoe UI", 10, "bold"), spacing1=6, spacing3=2)
-        self.txt_detalhes.tag_configure("secao_bo", foreground="#ffb86c", font=("Segoe UI", 10, "bold"), spacing1=6, spacing3=2)
-        self.txt_detalhes.tag_configure("item", foreground="#f8f8f2", font=("Segoe UI", 10), lmargin1=18, lmargin2=30, spacing1=2)
-        self.txt_detalhes.tag_configure("item_opcional", foreground="#f1fa8c", font=("Segoe UI", 10), lmargin1=18, lmargin2=30, spacing1=2)
-        self.txt_detalhes.tag_configure("item_logico", foreground="#bd93f9", font=("Segoe UI", 10), lmargin1=18, lmargin2=30, spacing1=2)
-        self.txt_detalhes.tag_configure("item_vazio", foreground="#949cbb", font=("Segoe UI", 10, "italic"), lmargin1=18, lmargin2=30, spacing1=2)
-
-        self._popular_listbox()
-        if self.listbox_ansi.size() > 0:
-            self.listbox_ansi.selection_set(0)
-            self._ao_selecionar_funcao(None)
-
-    def _popular_listbox(self, filtro=""):
-        self.listbox_ansi.delete(0, tk.END)
-        self.chaves_filtradas = []
-        filtro = filtro.lower().strip()
-
-        for codigo, dados in ANSI_DATABASE.items():
-            texto_exibicao = f"{codigo:>2} - {dados['nome']}"
-            sub_nomes = " ".join(dados["subfuncoes"].keys()).lower()
-            if (
-                filtro in codigo.lower()
-                or filtro in dados["nome"].lower()
-                or filtro in dados["descricao"].lower()
-                or filtro in sub_nomes
-            ):
-                self.listbox_ansi.insert(tk.END, texto_exibicao)
-                self.chaves_filtradas.append(codigo)
-
-    def _filtrar_lista(self, *args):
-        self._popular_listbox(self.var_busca.get())
-
-    def _inserir_item_formatado(self, texto):
-        if texto.startswith("[Opcional]"):
-            self.txt_detalhes.insert(tk.END, f"• {texto}\n", "item_opcional")
-        elif texto.startswith("[Lógico]"):
-            self.txt_detalhes.insert(tk.END, f"• {texto}\n", "item_logico")
-        else:
-            self.txt_detalhes.insert(tk.END, f"• {texto}\n", "item")
-
-    def _ao_selecionar_funcao(self, event):
-        selecao = self.listbox_ansi.curselection()
-        if not selecao:
-            return
-        idx = selecao[0]
-        codigo = self.chaves_filtradas[idx]
-        dados = ANSI_DATABASE[codigo]
-
-        self.lbl_titulo_funcao.config(text=f"ANSI {codigo} — {dados['nome']}")
-
-        self.txt_detalhes.config(state=tk.NORMAL)
-        self.txt_detalhes.delete("1.0", tk.END)
-
-        self.txt_detalhes.insert(tk.END, f"► Definição Funcional:\n{dados['descricao']}\n", "desc")
-
-        for nome_sub, sub_dados in dados["subfuncoes"].items():
-            self.txt_detalhes.insert(tk.END, f"  ■ {nome_sub}  \n", "subfuncao_header")
-
-            # Entradas Analógicas (EAs)
-            self.txt_detalhes.insert(tk.END, "  ⚡ Entradas Analógicas (EAs - TC / TP):\n", "secao_ea")
-            if sub_dados["ea"]:
-                for item in sub_dados["ea"]:
-                    self._inserir_item_formatado(item)
-            else:
-                # Item 10 do To-Do: Alterado para "para este item"
-                self.txt_detalhes.insert(tk.END, "• Nenhuma entrada analógica de TC/TP necessária para este item.\n", "item_vazio")
-
-            # Entradas Digitais (BIs)
-            self.txt_detalhes.insert(tk.END, "  [BI] Entradas Digitais (Binary Inputs):\n", "secao_bi")
-            for item in sub_dados["bi"]:
-                self._inserir_item_formatado(item)
-
-            # Saídas Digitais (BOs)
-            self.txt_detalhes.insert(tk.END, "  [BO] Saídas Digitais (Binary Outputs):\n", "secao_bo")
-            for item in sub_dados["bo"]:
-                self._inserir_item_formatado(item)
-
-            self.txt_detalhes.insert(tk.END, "\n")
-
-        self.txt_detalhes.config(state=tk.DISABLED)
-
-    # --------------------------------------------------------------------------
-    # ABA 2: CONSOLIDADOR DE WORKSTATEMENT (SEPARADO EM FÍSICOS, OPCIONAIS E LÓGICOS)
-    # --------------------------------------------------------------------------
-    def _construir_aba_workstatement(self):
-        paned = tk.PanedWindow(self.tab_workstatement, orient=tk.HORIZONTAL, bg="#1e1e2e", sashwidth=6, bd=0)
-        paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        frame_check = ttk.Frame(paned, width=430)
-        paned.add(frame_check, minsize=380)
-
-        ttk.Label(
-            frame_check,
-            text="Selecione os Itens do Workstatement:",
-            style="Header.TLabel"
-        ).pack(anchor="w", padx=5, pady=5)
-
-        self.canvas_chk = tk.Canvas(frame_check, bg="#282a36", highlightthickness=0)
-        scroll_chk = ttk.Scrollbar(frame_check, orient=tk.VERTICAL, command=self.canvas_chk.yview)
-        self.frame_interno_chk = tk.Frame(self.canvas_chk, bg="#282a36")
-
-        self.frame_interno_chk.bind(
-            "<Configure>",
-            lambda e: self.canvas_chk.configure(scrollregion=self.canvas_chk.bbox("all"))
-        )
-        self.canvas_window_id = self.canvas_chk.create_window((0, 0), window=self.frame_interno_chk, anchor="nw")
-        self.canvas_chk.configure(yscrollcommand=scroll_chk.set)
-
-        self.canvas_chk.bind(
-            "<Configure>",
-            lambda e: self.canvas_chk.itemconfigure(self.canvas_window_id, width=e.width)
-        )
-
-        self.canvas_chk.bind("<Enter>", lambda e: self.canvas_chk.bind_all("<MouseWheel>", self._rolar_canvas_mousewheel))
-        self.canvas_chk.bind("<Leave>", lambda e: self.canvas_chk.unbind_all("<MouseWheel>"))
-
-        self.canvas_chk.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
-        scroll_chk.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 5), pady=5)
-
-        for codigo, dados in ANSI_DATABASE.items():
-            lbl_cat = tk.Label(
-                self.frame_interno_chk,
-                text=f"ANSI {codigo} — {dados['nome']}",
-                bg="#343746",
-                fg="#8be9fd",
-                font=("Segoe UI", 9, "bold"),
-                anchor="w",
-                padx=6,
-                pady=2
-            )
-            lbl_cat.pack(fill=tk.X, padx=4, pady=(8, 2))
-
-            for nome_sub in dados["subfuncoes"].keys():
-                chave_unica = (codigo, nome_sub)
-                var = tk.BooleanVar(value=False)
-                self.checkbox_vars[chave_unica] = var
-                chk = tk.Checkbutton(
-                    self.frame_interno_chk,
-                    text=nome_sub,
-                    variable=var,
-                    command=self._atualizar_consolidado,
-                    bg="#282a36",
-                    fg="#f8f8f2",
-                    selectcolor="#1e1e2e",
-                    activebackground="#282a36",
-                    activeforeground="#50fa7b",
-                    font=("Segoe UI", 9),
-                    anchor="w"
-                )
-                chk.pack(fill=tk.X, padx=14, pady=1)
-
-        frame_res = ttk.Frame(paned)
-        paned.add(frame_res, minsize=560)
-
-        frame_topo_res = ttk.Frame(frame_res)
-        frame_topo_res.pack(fill=tk.X, padx=10, pady=5)
-
-        ttk.Label(frame_topo_res, text="Lista Consolidada (Físicos / Opcionais / Lógicos)", style="Header.TLabel").pack(side=tk.LEFT)
-        ttk.Button(frame_topo_res, text="Exportar CSV / Excel", style="Accent.TButton", command=self._exportar_csv).pack(side=tk.RIGHT, padx=4)
-        ttk.Button(frame_topo_res, text="Limpar Seleção", style="Accent.TButton", command=self._limpar_selecao).pack(side=tk.RIGHT, padx=4)
-
-        frame_txt_cons = ttk.Frame(frame_res)
-        frame_txt_cons.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-
-        scroll_cons = ttk.Scrollbar(frame_txt_cons, orient=tk.VERTICAL)
-        self.txt_consolidado = tk.Text(
-            frame_txt_cons,
-            yscrollcommand=scroll_cons.set,
-            bg="#282a36",
-            fg="#f8f8f2",
-            font=("Consolas", 10),
-            wrap=tk.WORD,
-            padx=15,
-            pady=15,
-            bd=0,
-            state=tk.DISABLED
-        )
-        scroll_cons.config(command=self.txt_consolidado.yview)
-        scroll_cons.pack(side=tk.RIGHT, fill=tk.Y)
-        self.txt_consolidado.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        self._atualizar_consolidado()
-
-    def _rolar_canvas_mousewheel(self, event):
-        self.canvas_chk.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    @staticmethod
-    def _extrair_chave_base_e_tag(texto_sinal):
-        """
-        Identifica se o sinal possui a TAG [Opcional] ou [Lógico] no início e
-        extrai o texto base (sem notas explicativas finais entre colchetes) para agrupamento.
-        """
-        tag = "Físico"
-        texto_limpo = texto_sinal.strip()
-
-        if texto_limpo.startswith("[Opcional]"):
-            tag = "Opcional"
-            texto_limpo = texto_limpo.replace("[Opcional]", "", 1).strip()
-        elif texto_limpo.startswith("[Lógico]"):
-            tag = "Lógico"
-            texto_limpo = texto_limpo.replace("[Lógico]", "", 1).strip()
-
-        # Mantém a nota de Zona 1 na iniciação do 79 da função 21 conforme Item 4c
-        if "Iniciação 79" in texto_limpo and "[Somente em Zona 1" in texto_limpo:
-            chave_base = texto_limpo
-        else:
-            chave_base = texto_limpo.split(" [")[0].strip()
-
-        return tag, chave_base
-
-    @staticmethod
-    def _rotulo_curto_subfuncao(nome_sub):
-        if "[" in nome_sub and "]" in nome_sub:
-            inicio = nome_sub.find("[") + 1
-            fim = nome_sub.find("]")
-            return nome_sub[inicio:fim]
-        return nome_sub.split(" (")[0].strip()
-
-    @staticmethod
-    def _registrar_no_grupo(dicionario, chave_base, tipo_io, tag, cod, rotulo):
-        if chave_base not in dicionario:
-            dicionario[chave_base] = {
-                "tipo_io": tipo_io,
-                "tag": tag,
-                "codigos_ansi": [],
-                "subfuncoes": []
-            }
-        if cod not in dicionario[chave_base]["codigos_ansi"]:
-            dicionario[chave_base]["codigos_ansi"].append(cod)
-        if rotulo not in dicionario[chave_base]["subfuncoes"]:
-            dicionario[chave_base]["subfuncoes"].append(rotulo)
-
-    def _agrupar_sinais_selecionados(self, selecionadas):
-        """
-        Separa os sinais consolidados em:
-          1. Físicos Principais (eas_fis, bis_fis, bos_fis)
-          2. Itens com TAG 'Opcional' (itens_opcionais)
-          3. Itens com TAG 'Lógico' (itens_logicos)
-        """
-        eas_fis, bis_fis, bos_fis = {}, {}, {}
-        itens_opcionais = {}
-        itens_logicos = {}
-
-        for cod, nome_sub in selecionadas:
-            rotulo = self._rotulo_curto_subfuncao(nome_sub)
-            sub_dados = ANSI_DATABASE[cod]["subfuncoes"][nome_sub]
-
-            for item in sub_dados["ea"]:
-                tag, chave_base = self._extrair_chave_base_e_tag(item)
-                self._registrar_no_grupo(eas_fis, chave_base, "EA (Analógica)", tag, cod, rotulo)
-
-            for item in sub_dados["bi"]:
-                tag, chave_base = self._extrair_chave_base_e_tag(item)
-                if tag == "Opcional":
-                    self._registrar_no_grupo(itens_opcionais, chave_base, "BI (Entrada Digital)", "Opcional", cod, rotulo)
-                elif tag == "Lógico":
-                    self._registrar_no_grupo(itens_logicos, chave_base, "BI (Entrada Digital)", "Lógico", cod, rotulo)
-                else:
-                    self._registrar_no_grupo(bis_fis, chave_base, "BI (Entrada Digital)", "Físico", cod, rotulo)
-
-            for item in sub_dados["bo"]:
-                tag, chave_base = self._extrair_chave_base_e_tag(item)
-                if tag == "Opcional":
-                    self._registrar_no_grupo(itens_opcionais, chave_base, "BO (Saída Digital)", "Opcional", cod, rotulo)
-                elif tag == "Lógico":
-                    self._registrar_no_grupo(itens_logicos, chave_base, "BO (Saída Digital)", "Lógico", cod, rotulo)
-                else:
-                    self._registrar_no_grupo(bos_fis, chave_base, "BO (Saída Digital)", "Físico", cod, rotulo)
-
-        return eas_fis, bis_fis, bos_fis, itens_opcionais, itens_logicos
-
-    def _atualizar_consolidado(self):
-        selecionadas = [chave for chave, var in self.checkbox_vars.items() if var.get()]
-
-        self.txt_consolidado.config(state=tk.NORMAL)
-        self.txt_consolidado.delete("1.0", tk.END)
-
-        if not selecionadas:
-            self.txt_consolidado.insert(
-                tk.END,
-                "Marque à esquerda os itens exigidos no Workstatement (ex: 21P, 50P, 51P, 79T)\n"
-                "para gerar a lista consolidada separada entre Sinais Físicos Principais, Itens [Opcional] e Itens [Lógico]."
-            )
-            self.txt_consolidado.config(state=tk.DISABLED)
-            return
-
-        eas_fis, bis_fis, bos_fis, opcionais, logicos = self._agrupar_sinais_selecionados(selecionadas)
-        nomes_sel = [self._rotulo_curto_subfuncao(nome_sub) for _, nome_sub in selecionadas]
-
-        cabecalho = (
-            f"========================================================================\n"
-            f" ITENS SELECIONADOS ({len(selecionadas)}): {', '.join(nomes_sel)}\n"
-            f"========================================================================\n\n"
-        )
-        self.txt_consolidado.insert(tk.END, cabecalho)
-
-        # BLOCO 1: SINAIS FÍSICOS PRINCIPAIS
-        self.txt_consolidado.insert(tk.END, f"--- [1] ENTRADAS ANALÓGICAS (EAs - Total: {len(eas_fis)}) ---\n")
-        if eas_fis:
-            for idx, (sinal, info) in enumerate(eas_fis.items(), 1):
-                self.txt_consolidado.insert(tk.END, f"  EA{idx:02d} [{', '.join(info['subfuncoes'])}]: {sinal}\n")
-        else:
-            self.txt_consolidado.insert(tk.END, "  Nenhuma Entrada Analógica necessária para os itens selecionados.\n")
-
-        self.txt_consolidado.insert(tk.END, f"\n--- [2] ENTRADAS DIGITAIS FÍSICAS (BIs - Total: {len(bis_fis)}) ---\n")
-        if bis_fis:
-            for idx, (sinal, info) in enumerate(bis_fis.items(), 1):
-                self.txt_consolidado.insert(tk.END, f"  BI{idx:02d} [{', '.join(info['subfuncoes'])}]: {sinal}\n")
-        else:
-            self.txt_consolidado.insert(tk.END, "  Nenhuma Entrada Digital obrigatória.\n")
-
-        self.txt_consolidado.insert(tk.END, f"\n--- [3] SAÍDAS DIGITAIS FÍSICAS (BOs - Total: {len(bos_fis)}) ---\n")
-        if bos_fis:
-            for idx, (sinal, info) in enumerate(bos_fis.items(), 1):
-                self.txt_consolidado.insert(tk.END, f"  BO{idx:02d} [{', '.join(info['subfuncoes'])}]: {sinal}\n")
-        else:
-            self.txt_consolidado.insert(tk.END, "  Nenhuma Saída Digital física obrigatória.\n")
-
-        # BLOCO 2: ITENS OPCIONAIS (Separados conforme Item 4 do To-Do)
-        self.txt_consolidado.insert(tk.END, f"\n========================================================================\n")
-        self.txt_consolidado.insert(tk.END, f"--- [4] ITENS COM TAG [Opcional] (Total: {len(opcionais)}) ---\n")
-        if opcionais:
-            for idx, (sinal, info) in enumerate(opcionais.items(), 1):
-                prefixo = "BI_OPC" if "BI" in info["tipo_io"] else "BO_OPC"
-                self.txt_consolidado.insert(
-                    tk.END,
-                    f"  {prefixo}{idx:02d} [TAG: Opcional | {', '.join(info['subfuncoes'])}]: {sinal}\n"
-                )
-        else:
-            self.txt_consolidado.insert(tk.END, "  Nenhum item opcional associado.\n")
-
-        # BLOCO 3: ITENS LÓGICOS (Separados conforme Item 5 do To-Do)
-        self.txt_consolidado.insert(tk.END, f"\n========================================================================\n")
-        self.txt_consolidado.insert(tk.END, f"--- [5] ITENS COM TAG [Lógico] (Total: {len(logicos)}) ---\n")
-        if logicos:
-            for idx, (sinal, info) in enumerate(logicos.items(), 1):
-                self.txt_consolidado.insert(
-                    tk.END,
-                    f"  LOG{idx:02d} [TAG: Lógico | {', '.join(info['subfuncoes'])}]: {sinal}\n"
-                )
-        else:
-            self.txt_consolidado.insert(tk.END, "  Nenhum item lógico associado.\n")
-
-        self.txt_consolidado.config(state=tk.DISABLED)
-
-    def _limpar_selecao(self):
-        for var in self.checkbox_vars.values():
-            var.set(False)
-        self._atualizar_consolidado()
-
-    def _exportar_csv(self):
-        selecionadas = [chave for chave, var in self.checkbox_vars.items() if var.get()]
-        if not selecionadas:
-            messagebox.showwarning("Aviso", "Selecione pelo menos um item ANSI antes de exportar.")
-            return
-
-        caminho = filedialog.asksaveasfilename(
-            defaultextension=".csv",
-            filetypes=[("Arquivo CSV (Excel)", "*.csv"), ("Todos os arquivos", "*.*")],
-            initialfile="Mapa_IO_SPCS_Build_2_0.csv"
-        )
-        if not caminho:
-            return
-
-        eas_fis, bis_fis, bos_fis, opcionais, logicos = self._agrupar_sinais_selecionados(selecionadas)
-
-        try:
-            with open(caminho, mode="w", newline="", encoding="utf-8-sig") as f:
-                writer = csv.writer(f, delimiter=";")
-
-                # --------------------------------------------------------------
-                # TABELA 1: ENTRADAS E SAÍDAS FÍSICAS PRINCIPAIS
-                # --------------------------------------------------------------
-                writer.writerow(["=== 1. SINAIS FÍSICOS PRINCIPAIS (EAs, BIs e BOs) ===", "", "", "", "", ""])
-                writer.writerow(["CODIGO_IO", "TIPO_IO", "TAG", "FUNCOES_ANSI", "ITENS_ASSOCIADOS", "DESCRICAO_SINAL"])
-
-                for idx, (sinal, info) in enumerate(eas_fis.items(), 1):
-                    writer.writerow([
-                        f"EA{idx:02d}",
-                        info["tipo_io"],
-                        "Físico",
-                        ", ".join(info["codigos_ansi"]),
-                        ", ".join(info["subfuncoes"]),
-                        sinal
-                    ])
-
-                for idx, (sinal, info) in enumerate(bis_fis.items(), 1):
-                    writer.writerow([
-                        f"BI{idx:02d}",
-                        info["tipo_io"],
-                        "Físico",
-                        ", ".join(info["codigos_ansi"]),
-                        ", ".join(info["subfuncoes"]),
-                        sinal
-                    ])
-
-                for idx, (sinal, info) in enumerate(bos_fis.items(), 1):
-                    writer.writerow([
-                        f"BO{idx:02d}",
-                        info["tipo_io"],
-                        "Físico",
-                        ", ".join(info["codigos_ansi"]),
-                        ", ".join(info["subfuncoes"]),
-                        sinal
-                    ])
-
-                # --------------------------------------------------------------
-                # TABELA 2: ITENS OPCIONAIS (SEPARADOS NO EXCEL - ITEM 4 DO TO-DO)
-                # --------------------------------------------------------------
-                writer.writerow([])
-                writer.writerow(["=== 2. ITENS OPCIONAIS (TAG: Opcional) ===", "", "", "", "", ""])
-                writer.writerow(["CODIGO_IO", "TIPO_IO", "TAG", "FUNCOES_ANSI", "ITENS_ASSOCIADOS", "DESCRICAO_SINAL"])
-
-                for idx, (sinal, info) in enumerate(opcionais.items(), 1):
-                    prefixo = "BI_OPC" if "BI" in info["tipo_io"] else "BO_OPC"
-                    writer.writerow([
-                        f"{prefixo}{idx:02d}",
-                        info["tipo_io"],
-                        "Opcional",
-                        ", ".join(info["codigos_ansi"]),
-                        ", ".join(info["subfuncoes"]),
-                        sinal
-                    ])
-
-                # --------------------------------------------------------------
-                # TABELA 3: ITENS LÓGICOS (SEPARADOS NO EXCEL - ITEM 5 DO TO-DO)
-                # --------------------------------------------------------------
-                writer.writerow([])
-                writer.writerow(["=== 3. ITENS LÓGICOS (TAG: Lógico) ===", "", "", "", "", ""])
-                writer.writerow(["CODIGO_IO", "TIPO_IO", "TAG", "FUNCOES_ANSI", "ITENS_ASSOCIADOS", "DESCRICAO_SINAL"])
-
-                for idx, (sinal, info) in enumerate(logicos.items(), 1):
-                    writer.writerow([
-                        f"LOG{idx:02d}",
-                        info["tipo_io"],
-                        "Lógico",
-                        ", ".join(info["codigos_ansi"]),
-                        ", ".join(info["subfuncoes"]),
-                        sinal
-                    ])
-
-            messagebox.showinfo("Sucesso", f"Planilha exportada com seções separadas (Físicos, Opcionais e Lógicos) em:\n{caminho}")
-        except Exception as e:
-            messagebox.showerror("Erro ao Exportar", str(e))
-
-
-if __name__ == "__main__":
-    app = SPCSApp()
-    app.mainloop()
